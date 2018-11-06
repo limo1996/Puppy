@@ -1,0 +1,247 @@
+package research.analysis;
+
+import java.util.*;
+
+import soot.*;
+import soot.Value;
+import soot.jimple.*;
+import soot.jimple.internal.*;
+import soot.options.*;
+import soot.toolkits.graph.*;
+import soot.toolkits.scalar.*;
+
+
+class ReachingDefinitions extends ForwardBranchedFlowAnalysis<Map<Local, Definition>> {
+    private Map<Local, Definition> _entryFlow;
+    private JimpleLocal _curr;
+    private UnitGraph _graph;
+    private Settings _settings;
+
+    ReachingDefinitions(UnitGraph graph, Settings settings) {
+        super(graph);
+
+        _entryFlow = new HashMap<Local, Definition>();
+        _graph = graph;
+        _settings = settings;
+        _curr = new JimpleLocal("_hopefully_some_impossible_variable_name_6163361", BooleanType.v());
+
+        Body b = graph.getBody();
+        _entryFlow.put(_curr, new ConditionList());
+
+        for (Local l : b.getLocals()) {
+            Value defaultV = Utils.getDefaultValue((JimpleLocal)l);
+            Definition def = new LocalDefinition(l, new ConditionList(), defaultV);
+            _entryFlow.put(l, def);
+        }
+
+        debug("'-----------> Analyzing " + graph.getBody().getMethod().getName(), 3);
+        test("method:" + graph.getBody().getMethod().getName());
+        doAnalysis();
+        print();
+    }
+
+    public void print() {
+        Iterator unitIt = graph.iterator();
+        while(unitIt.hasNext()){
+            Unit s = (Unit) unitIt.next();
+            Map<Local, Definition> set = getFlowBefore(s);
+            int level = 2;
+            if(s.toString().trim().equals("return"))
+                level = 3;
+
+            debug("Unit: " + s.toString(), level);
+            for(Map.Entry<Local, Definition> entry : set.entrySet()){
+                String output = entry.getKey().getName() + ":" + entry.getValue().toString();
+                debug(output, level);
+                if(level == 3)
+                    test(output);
+            }
+        }
+    }
+
+    /**
+     * Copy simply copies the source to the destination
+     */
+    protected void copy(Map<Local, Definition> src, Map<Local, Definition> dest) {
+        //dest.clear();
+        dest.putAll(src);
+        for(Map.Entry<Local, Definition> entry: src.entrySet()){
+            assert (entry.getValue() == dest.get(entry.getKey()));
+        }
+    }
+
+    /**
+     * Merging two maps consists of joining the lattice values of every
+     * variable contained in those maps
+     */
+    protected void merge(Map<Local, Definition> src1,
+                         Map<Local, Definition> src2,
+                         Map<Local, Definition> dest) {
+        // TODO: Check if deep copies are needed
+        compensateFalledOut(src1, src2);
+        compensateFalledOut(src2, src1);
+
+        debug("Merging " + src1.toString() + " with " + src2.toString() + " to dest " + dest.toString(), 1);
+
+        copy(src1, dest);
+        for (Map.Entry<Local, Definition> entry : src2.entrySet()) {
+            Local key = entry.getKey();
+            Definition value = entry.getValue();
+            if (dest.containsKey(key)) {
+                // merge here and add negated condition
+                // need to find guarded condition from one of the two or both 
+                // need to find set of changed variables in one or both branches
+                // add negated condition to defintions that "flowed through" not guarded branch 
+                dest.put(key, value.join(dest.get(key)));
+            } else {
+                dest.put(key, value);
+            }
+        }
+    }
+
+    /**
+     * In our analysis we are interested in two cases:
+     * If statement: guards defintion by condition
+     * Definition: Defines new Value of local variable (Can be guarded by condition i.e. if inside if stmt)
+     */
+    protected void flowThrough(Map<Local, Definition> src, Unit unit,
+                               List<Map<Local, Definition>> fallOut, // fallout -> branch that follows not satisfied condition
+                               List<Map<Local, Definition>> branchOuts // branchout -> branch that follows satisfied condition
+                               ) {
+        Stmt s = (Stmt) unit;
+        Map<Local, Definition> out = new HashMap<Local, Definition>(src);
+        Map<Local, Definition> outBranch = new HashMap<Local, Definition>(src);
+
+        if (s instanceof IfStmt) {
+            ConditionExpr condition = (ConditionExpr)((IfStmt)s).getCondition();
+            ConditionList list = ((ConditionList)outBranch.get(_curr)).clone();     // need to duplicate curr conditions to be consistent
+            ((ConditionList)outBranch.get(_curr)).add(condition);
+            BinopExpr negCondition = Utils.negate(condition);
+            list.add(negCondition);
+            out.put(_curr, list);
+
+            /*for(Map.Entry<Local, Definition> entry : out.entrySet()) {
+                if(entry.getValue() instanceof LocalDefinition) {
+                    LocalDefinition ldef = (LocalDefinition)entry.getValue();
+                    ldef.appendCondition(negCondition);
+                }
+            }*/
+
+            debug("Fork " + outBranch.toString() + " with " + out.toString(), 1);
+        } else if (s instanceof DefinitionStmt) {
+            DefinitionStmt defStmt = (DefinitionStmt) s;
+            Local variable = (Local)defStmt.getLeftOp();
+            Definition def = new LocalDefinition(variable, ((ConditionList)src.get(_curr)).clone(), defStmt.getRightOp());
+            out.put(variable, def);
+        }
+
+        for (Iterator<Map<Local, Definition>> it = fallOut.iterator(); it.hasNext(); )
+            copy(out, it.next());
+
+        for (Iterator<Map<Local, Definition>> it = branchOuts.iterator(); it.hasNext(); )
+            copy(outBranch, it.next());
+    }
+
+    /**
+     * Initial flow to entry block of the CFG
+     */
+    protected Map<Local, Definition> entryInitialFlow() {
+        return new HashMap<Local, Definition>(_entryFlow);
+    }
+
+    /**
+     * Initial flow to every block of the CFG
+     */
+    protected Map<Local, Definition> newInitialFlow() {
+        return new HashMap<Local, Definition>();
+    }
+
+    /**
+     * In case of if statements without else block or ifs that do not modify same set of variables in both branches
+     * we need to modify definitions of these variables in order to be conditant. 
+     * 
+     * This function compensates definitions of these variables. It adds these missing conditions
+     * to definitions int falledout map
+     * This function should be called twice with switched parameters.
+     *
+     * Example:
+     * int i = 0;
+     * if(x == 0) {
+     *      i = 1;
+     * }
+     *
+     * Explanation:
+     * Definition of i should be |x==0 ==> i=1 and x!=0 ==> i=0| but without calling this function is:
+     * |x==0 ==> i=1 and i=0| because we did not modify definition in falledout branch.
+     */
+    protected void compensateFalledOut(Map<Local, Definition> branched, Map<Local, Definition> falledout) {
+        // find condition that branched has taken
+        Set<Value> blist = ((ConditionList)branched.get(_curr)).getConditions();
+        Set<Value> flist = ((ConditionList)falledout.get(_curr)).getConditions();
+        Value condition = findCondition(blist, flist);
+        Value negCondition = findCondition(flist, blist);
+
+        debug("Condition: " + condition, 2);
+
+        // find variables that were modified by one branch but not the other
+        Set<Local> modifiedLocals = new HashSet<Local>();
+        for(Map.Entry<Local, Definition> entry : branched.entrySet()) {
+            // if variable was modified in one branch but not in the other then we add it
+            debug("Local: " + entry.getKey() + ", definition: " + entry.getValue() + " " 
+            + entry.getValue().containsCondition(condition) + " " + falledout.get(entry.getKey()).containsCondition(negCondition), 1);
+            if(entry.getValue() instanceof LocalDefinition && entry.getValue().containsCondition(condition)
+               && !falledout.get(entry.getKey()).containsCondition(negCondition)) {  
+                modifiedLocals.add(entry.getKey());
+            }
+        }
+
+        debug("Modified locals: " + modifiedLocals, 2);
+
+        // add condition of falled out branch (negated condition of branched out branch)
+        // to variables that were modified in branch out branch but not by falled out
+        for(Map.Entry<Local, Definition> entry : falledout.entrySet()) {
+            if(modifiedLocals.contains(entry.getKey())) {
+                LocalDefinition ldef = (LocalDefinition)entry.getValue();
+                for(Set<Value> key : ldef.getDefinitions().keySet()) {
+                    key.add(negCondition);
+                }
+            }
+        }
+    }
+
+    // finds condition that set1 contains but set2 not. Must be only one.
+    private Value findCondition(Set<Value> set1, Set<Value> set2) {
+        Value condition = null;
+        for(Value cond : set1) {
+            if(!set2.contains(cond)) {
+                assert (cond == null) : "This should never happen. Branches differ in more than one condition.";
+                condition = cond;
+            }
+        }
+
+        assert (condition != null) : "This should never happen. Branches have to differ in one condition.";
+        return condition;
+    }
+
+    private void debug(String msg){
+        debug(msg, 1);
+    }
+
+    private void debug(String msg, int debug){
+        debug(msg, debug, true);
+    }
+
+    // debug output
+    private void debug(String msg, int level, boolean newLine) {
+        _settings.debug(msg, level, newLine);
+    }
+
+    private void test(String msg) {
+        test(msg, true);
+    }
+
+    // appends to output file which will be tested
+    private void test(String msg, boolean newLine) {
+        _settings.test(msg, newLine);
+    }
+}
