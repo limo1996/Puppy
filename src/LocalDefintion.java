@@ -6,10 +6,17 @@ import soot.Local;
 import soot.Value;
 import soot.G;
 
+/**
+ * Definition of local variable within a function.
+ */
 class LocalDefinition implements Definition {
     private Map<Set<Value>, Value> condToDefinition;
     private Local target;
 
+    /**
+     * Creates new instance of LocalDefinition with at least one conditional definition.
+     * Best usage of this constructor is with current ConditionalList and definition found.
+     */
     LocalDefinition(Local definitionOf, Definition conds, Value def) {
         this.target = definitionOf;
         if(conds instanceof LocalDefinition) {
@@ -21,6 +28,9 @@ class LocalDefinition implements Definition {
         }
     }
 
+    /**
+     * Creates new instance of LocalDefinition with at least one conditional definition.
+     */
     LocalDefinition(Local definitionOf, Value cond, Value def) {
         this.target = definitionOf;
         condToDefinition = new HashMap<Set<Value>, Value>();
@@ -29,26 +39,42 @@ class LocalDefinition implements Definition {
         condToDefinition.put(tmp, def);
     }
 
+    /**
+     * Joins two local definitions into current one and returns current one.
+     */
     public Definition join(Definition other){
         if(other instanceof LocalDefinition) {
             LocalDefinition lOther = (LocalDefinition)other;
             for (Map.Entry<Set<Value>, Value> entry : lOther.condToDefinition.entrySet()) {
-                this.condToDefinition.put(entry.getKey(), entry.getValue());    // What if same condition?
+                Set<Value> key = entry.getKey();
+                Value value = entry.getValue();
+                if(this.condToDefinition.containsKey(key))
+                    assert (condToDefinition.get(key) == value) : "Merging two Local Definitions with same conditions but different values!";
+                this.condToDefinition.put(key, value);    // What if same condition? Can it even happen? -> assert ;)
             }
         }
         return this;
     }
 
+    /**
+     * Adds condition to each conditional definition.
+     */
     public void appendCondition(Value condition) {
         for(Map.Entry<Set<Value>, Value> entry : condToDefinition.entrySet()) {
             entry.getKey().add(condition);
         }
     }
 
+    /**
+     * Returns map of conditional defintions.
+     */
     public Map<Set<Value>, Value> getDefinitions() {
         return this.condToDefinition;
     }
 
+    /**
+     * Returns true if condition is present in any conditional definition.
+     */
     public boolean containsCondition(Value condition) {
         for(Set<Value> key : this.condToDefinition.keySet()) {
             if(key.contains(condition))
@@ -57,6 +83,9 @@ class LocalDefinition implements Definition {
         return false;
     }
 
+    /**
+     * Returns string representaion of the object.
+     */
     @Override
     public String toString(){
         return condToDefinition.toString();

@@ -6,9 +6,9 @@ import soot.*;
 import soot.toolkits.graph.*;
 import soot.toolkits.scalar.FlowSet;
 
-/*** *** *** YOU DO NOT SUBMIT THIS FILE *** *** ***/
-/*** *** *** PLEASE DON'T EDIT THIS FILE *** *** ***/
-
+/**
+ * Class that runs our analysis on every method with settings obtained through command line.
+ */
 public class AnalysisTransformer extends SceneTransformer {
     String test_out;
 
@@ -30,7 +30,7 @@ public class AnalysisTransformer extends SceneTransformer {
 		        ReachingDefinitions analysis = new ReachingDefinitions(graph, s);
 
             } catch(RuntimeException ex) {
-                System.err.println(ex.getMessage());
+                G.v().out.println(ex.getMessage());
             }
         }
         s.testEnd();

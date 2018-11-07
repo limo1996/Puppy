@@ -2,9 +2,9 @@ package research.analysis;
 
 import soot.*;
 
-/*** *** *** YOU DO NOT SUBMIT THIS FILE *** *** ***/
-/*** *** *** PLEASE DON'T EDIT THIS FILE *** *** ***/
-
+/**
+ * Runs Data flow analysis with provided command line arguments.
+ */
 public class RunDataFlowAnalysis {
 	public static void main(String[] args) {
 		

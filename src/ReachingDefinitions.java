@@ -10,13 +10,19 @@ import soot.options.*;
 import soot.toolkits.graph.*;
 import soot.toolkits.scalar.*;
 
-
+/**
+ * Class that runs Conditional Definitions Analysis on UnitGraph of provided method.
+ */
 class ReachingDefinitions extends ForwardBranchedFlowAnalysis<Map<Local, Definition>> {
     private Map<Local, Definition> _entryFlow;
     private JimpleLocal _curr;
     private UnitGraph _graph;
     private Settings _settings;
 
+    /**
+     * Creates new instance of ReachingDefinitions + runs conditional definitions analysis.
+     * Prints debug and test output if specified in settings.
+     */
     ReachingDefinitions(UnitGraph graph, Settings settings) {
         super(graph);
 
@@ -28,6 +34,7 @@ class ReachingDefinitions extends ForwardBranchedFlowAnalysis<Map<Local, Definit
         Body b = graph.getBody();
         _entryFlow.put(_curr, new ConditionList());
 
+        // Create entry flow by assigning default values to all locals.
         for (Local l : b.getLocals()) {
             Value defaultV = Utils.getDefaultValue((JimpleLocal)l);
             Definition def = new LocalDefinition(l, new ConditionList(), defaultV);
@@ -40,6 +47,10 @@ class ReachingDefinitions extends ForwardBranchedFlowAnalysis<Map<Local, Definit
         print();
     }
 
+    /**
+     * Prints IN sets for every statement + outputs IN set of return stmt 
+     * in test format to given test_out file for correctness testing.
+     */
     public void print() {
         Iterator unitIt = graph.iterator();
         while(unitIt.hasNext()){
@@ -78,20 +89,20 @@ class ReachingDefinitions extends ForwardBranchedFlowAnalysis<Map<Local, Definit
                          Map<Local, Definition> src2,
                          Map<Local, Definition> dest) {
         // TODO: Check if deep copies are needed
+
+        // adds negated conditions to variables modified only in one branch
+        // see documentation of compensateFalledOut function for more details
         compensateFalledOut(src1, src2);
         compensateFalledOut(src2, src1);
 
         debug("Merging " + src1.toString() + " with " + src2.toString() + " to dest " + dest.toString(), 1);
-
         copy(src1, dest);
+
         for (Map.Entry<Local, Definition> entry : src2.entrySet()) {
             Local key = entry.getKey();
             Definition value = entry.getValue();
             if (dest.containsKey(key)) {
-                // merge here and add negated condition
-                // need to find guarded condition from one of the two or both 
-                // need to find set of changed variables in one or both branches
-                // add negated condition to defintions that "flowed through" not guarded branch 
+                // join definitions if present in both lists
                 dest.put(key, value.join(dest.get(key)));
             } else {
                 dest.put(key, value);
@@ -116,17 +127,8 @@ class ReachingDefinitions extends ForwardBranchedFlowAnalysis<Map<Local, Definit
             ConditionExpr condition = (ConditionExpr)((IfStmt)s).getCondition();
             ConditionList list = ((ConditionList)outBranch.get(_curr)).clone();     // need to duplicate curr conditions to be consistent
             ((ConditionList)outBranch.get(_curr)).add(condition);
-            BinopExpr negCondition = Utils.negate(condition);
-            list.add(negCondition);
+            list.add(Utils.negate(condition));
             out.put(_curr, list);
-
-            /*for(Map.Entry<Local, Definition> entry : out.entrySet()) {
-                if(entry.getValue() instanceof LocalDefinition) {
-                    LocalDefinition ldef = (LocalDefinition)entry.getValue();
-                    ldef.appendCondition(negCondition);
-                }
-            }*/
-
             debug("Fork " + outBranch.toString() + " with " + out.toString(), 1);
         } else if (s instanceof DefinitionStmt) {
             DefinitionStmt defStmt = (DefinitionStmt) s;

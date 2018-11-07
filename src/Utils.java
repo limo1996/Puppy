@@ -8,7 +8,13 @@ import java.util.Map;
 import java.util.HashMap;
 import java.lang.RuntimeException;
 
+/**
+ * Typical Utils static class.
+ */
 class Utils {
+    /**
+     * Returns default value of the local.
+     */
     public static Value getDefaultValue(JimpleLocal local) {
         if(local.getType() instanceof IntType)
             return IntConstant.v(0);
@@ -24,6 +30,9 @@ class Utils {
         // with their corresponding default values.
     }
 
+    /**
+     * Negates conditional expression.
+     */
     public static BinopExpr negate(ConditionExpr condExpr) {
 		BinopExpr ret = null;
 		if(condExpr != null){
