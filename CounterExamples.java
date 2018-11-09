@@ -52,7 +52,7 @@ class CounterExamples {
         if(c == 0){
             c = a + b;
             if(c > b){
-                error()
+                error();
             }
         } else {
             
@@ -64,6 +64,24 @@ class CounterExamples {
     }
     void error() {
         throw RuntimeException("Error");
+    }
+
+    void ex4(int a, int b){
+        int c, d;
+        if(a <= b){
+            c = 1;
+            d = 2;
+        } else {
+            d = 1;
+            c = 2;
+        }
+
+        if(c < d){
+            a = c;
+            c++;
+        }
+
+        System.out.println(a + b + c + d);
     }
 
 }
@@ -87,4 +105,11 @@ class CounterExamples {
                                               -> returns purified def. i.e. depends only on the input
   */
 
+  /*
+  TODO:
+    * Think about multiple return points. Shouldn't be a problem...
   
+  
+  
+  
+  */

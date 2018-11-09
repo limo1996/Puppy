@@ -10,7 +10,7 @@ mkdir -p ../class
 if javac -cp soot.jar -d ../class ../src/*.java; then
 
 	## run test cases
-	if java -cp soot.jar:../class research.analysis.RunDataFlowAnalysis Test ../out/Test.out; then
+	if java -cp soot.jar:../class research.analysis.RunDataFlowAnalysis Test S ../out/Test.out; then
         if python3 comparer.py ../out/Test.mastersol ../out/Test.sol; then
             echo "[OK] ../test/1/Test.java";
         else
