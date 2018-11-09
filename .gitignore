@@ -36,3 +36,4 @@ out/*
 
 # vscode files
 .DS_Store
+.vscode/
