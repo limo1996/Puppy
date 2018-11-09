@@ -8,17 +8,30 @@ import soot.*;
 public class RunDataFlowAnalysis {
 	public static void main(String[] args) {
 		
-        String test_out = null;
+        String test_out = null, wholep = "-w", jimple_s = "J", pack="wjtp";
+        Settings.Representation representation = Settings.Representation.JIMPLE;
 
+		// parse command line arguments
 		if (args.length == 0) {
 			System.out.println("Usage: java research.analysis.RunDataFlowAnalysis class_to_analyse out_file");
 			System.exit(1);
 		} else {
-			System.out.println("------- Analyzing class: " + args[0] + " ------------");
-            if(args.length == 2) {
-                test_out = args[1];
+            System.out.println("------- Analyzing class: " + args[0] + " ------------");
+            if (args.length >= 2) {
+                representation = args[1].equals("J") ? Settings.Representation.JIMPLE : Settings.Representation.SHIMPLE;
             }
-		}
+            if (args.length >= 3) {
+                test_out = args[2];
+            }
+        }
+		
+		// set parameters for shimple
+        if (representation == Settings.Representation.SHIMPLE) {
+            assert args[1].equals("S");
+            wholep = "-ws";
+            jimple_s = "S";
+            pack = "wstp";
+        }
 
 		String mainClass = args[0];
 
@@ -31,18 +44,18 @@ public class RunDataFlowAnalysis {
 		String[] sootArgs = {
 			"-cp", classPath, "-pp", 	// sets the class path for Soot
 			"-allow-phantom-refs",		// in case certain references are not correct (older versions of Java)
-			"-w", 						// Whole program analysis, necessary for using Transformer
+            wholep, 					// Whole program analysis, necessary for using Transformer **s added for shimple**
 			"-src-prec", "c",			// Specify type of source file
 			"-main-class", mainClass,	// Specify the main class 
-			"-f", "J", 					// Specify type of output file
+            "-f", jimple_s, 			// Specify type of output file **added for shimple**
 			mainClass 
 		};
 
 		// Create transformer for analysis
-		AnalysisTransformer analysisTransformer = new AnalysisTransformer(test_out);
+		AnalysisTransformer analysisTransformer = new AnalysisTransformer(new Settings(3, test_out, representation));
 
 		// Add transformer to appropriate Pack in PackManager. PackManager will run all Packs when main function of Soot is called
-		PackManager.v().getPack("wjtp").add(new Transform("wjtp.dfa", analysisTransformer));
+		PackManager.v().getPack(pack).add(new Transform(pack + ".baf", analysisTransformer));
 
 		// Call main function with arguments
 		soot.Main.main(sootArgs);
