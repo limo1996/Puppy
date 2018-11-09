@@ -47,20 +47,24 @@ class LocalDefinition implements Definition {
     }
 
     /**
-     * Joins two local definitions into current one and returns current one.
+     * Joins two local definitions into current one and returns new instance.
+	 * Returns null if @param other is not of type LocalDefinition.
      */
     public Definition join(Definition other){
         if(other instanceof LocalDefinition) {
+			LocalDefinition lnew = new LocalDefinition(this.target);
+			lnew.condToDefinition = new HashMap<Set<Value>, Value>(this.condToDefinition);
             LocalDefinition lOther = (LocalDefinition)other;
             for (Map.Entry<Set<Value>, Value> entry : lOther.condToDefinition.entrySet()) {
                 Set<Value> key = entry.getKey();
                 Value value = entry.getValue();
-                if(this.condToDefinition.containsKey(key))
+                if(lnew.condToDefinition.containsKey(key))
                     assert (condToDefinition.get(key) == value) : "Merging two Local Definitions with same conditions but different values!";
-                this.condToDefinition.put(key, value);    // What if same condition? Can it even happen? -> assert ;)
-            }
+                lnew.condToDefinition.put(key, value);    // What if same condition? Can it even happen? -> assert ;)
+			}
+			return lnew;
         }
-        return this;
+        return null;
     }
 
     /**
