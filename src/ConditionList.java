@@ -16,16 +16,20 @@ class ConditionList implements Definition {
     }
 
     /**
-     * Joins current Conditional List with the other and returns current with modified inner structure.
+     * Joins current Conditional List with the other and returns new instance.
      * Should be called when joining of two branches occurs. Internally does intersection of two sets
      * so joined branch contains conditions from both incoming branches.
+	 * Returns null if other is not of type ConditionalList.
      */
     public Definition join(Definition other) {
         if(other instanceof ConditionList) {
+            ConditionList newcl = new ConditionList();
+            newcl._currConditions = new HashSet<Value>(this._currConditions);
             ConditionList cOther = (ConditionList)other;
-            _currConditions.retainAll(cOther._currConditions);
+            newcl._currConditions.retainAll(cOther._currConditions);
+            return newcl;
         }
-        return this;
+        return null;
     }
 
     /**

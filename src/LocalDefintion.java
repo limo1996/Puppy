@@ -17,7 +17,7 @@ class LocalDefinition implements Definition {
      * Creates new instance of LocalDefinition with at least one conditional definition.
      * Best usage of this constructor is with current ConditionalList and definition found.
      */
-    LocalDefinition(Local definitionOf, Definition conds, Value def) {
+    public LocalDefinition(Local definitionOf, Definition conds, Value def) {
         this.target = definitionOf;
         if(conds instanceof LocalDefinition) {
             condToDefinition = new HashMap<Set<Value>, Value>(((LocalDefinition)conds).condToDefinition);
@@ -31,12 +31,19 @@ class LocalDefinition implements Definition {
     /**
      * Creates new instance of LocalDefinition with at least one conditional definition.
      */
-    LocalDefinition(Local definitionOf, Value cond, Value def) {
-        this.target = definitionOf;
-        condToDefinition = new HashMap<Set<Value>, Value>();
+    public LocalDefinition(Local definitionOf, Value cond, Value def) {
+        this(definitionOf);
         Set<Value> tmp = new HashSet<Value>();
         tmp.add(cond);
         condToDefinition.put(tmp, def);
+    }
+
+    /**
+     * Creates new instance of empty LocalDefinition.
+     */
+    public LocalDefinition(Local definitionOf) {
+        this.target = definitionOf;
+        condToDefinition = new HashMap<Set<Value>, Value>();
     }
 
     /**
@@ -70,6 +77,13 @@ class LocalDefinition implements Definition {
      */
     public Map<Set<Value>, Value> getDefinitions() {
         return this.condToDefinition;
+    }
+
+    /**
+     * Adds new definition.
+     */
+    public void addDefinition(Set<Value> conditions, Value value) {
+        this.condToDefinition.put(conditions, value);
     }
 
     /**
