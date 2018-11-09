@@ -57,4 +57,47 @@ public class Test {
         }
         System.out.println(d);
     }
+
+    void ex5(int a){
+        int d = 0;
+        if(a == 0){
+            return;
+        } else {
+            d = 6;
+        }
+        if(a >7){
+            d = 8;
+        }
+        System.out.println(d);
+    }
+
+    void ex6(int a, int b){
+        int c, d;
+        if(a <= b){
+            if(a==b){
+                c = 1;
+                d = 2;
+            } else {
+                c = 3;
+                d = 4;
+            }
+        } else {
+            d = 1;
+            c = 2;
+        }
+
+        if(c < d){
+            a = c;
+            c++;
+        }
+
+        System.out.println(a + b + c + d);
+    }
+
+    void ex7(int a) {
+        int d = 0;
+        if(a < 0)
+            d = 1;
+        System.out.print(d);
+    }
 }

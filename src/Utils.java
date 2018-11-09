@@ -33,8 +33,8 @@ class Utils {
     /**
      * Negates conditional expression.
      */
-    public static BinopExpr negate(ConditionExpr condExpr) {
-		BinopExpr ret = null;
+    public static ConditionExpr negate(ConditionExpr condExpr) {
+		ConditionExpr ret = null;
 		if(condExpr != null){
 			Value lhs = condExpr.getOp1();
 			Value rhs = condExpr.getOp2();
