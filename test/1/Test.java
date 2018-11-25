@@ -10,7 +10,7 @@ public class Test {
 			i1 = i0;
 		} else {
             i0 = 9;
-            i1 = 5;
+			i1 = 5;
         }
 
         System.out.println(i0 + i1);
@@ -22,7 +22,8 @@ public class Test {
         if(c == 0){
             d = a;
         } else {
-            d = b;
+			d = b;
+			error();
         }
         System.out.println(d);
     }
@@ -30,7 +31,8 @@ public class Test {
     void ex2(int a){
         int d = 0;
         if(a == 0){
-            d = 5;
+			d = 5;
+			error();
         }
         System.out.println(d);
     }
@@ -40,7 +42,8 @@ public class Test {
         if(a == 0){
             d = 5;
         } else {
-            d = 6;
+			d = 6;
+			error();
         }
         System.out.println(d);
     }
@@ -53,7 +56,8 @@ public class Test {
             d = 6;
         }
         if(a >7){
-            d = 8;
+			d = 8;
+			error();
         }
         System.out.println(d);
     }
@@ -66,7 +70,8 @@ public class Test {
             d = 6;
         }
         if(a >7){
-            d = 8;
+			d = 8;
+			error();
         }
         System.out.println(d);
     }
@@ -88,7 +93,8 @@ public class Test {
 
         if(c < d){
             a = c;
-            c++;
+			c++;
+			error();
         }
 
         System.out.println(a + b + c + d);
@@ -97,7 +103,122 @@ public class Test {
     void ex7(int a) {
         int d = 0;
         if(a < 0)
-            d = 1;
+			d = 1;
+		error();
         System.out.print(d);
-    }
+	}
+	
+	void ex8(int a, int b, int c) {
+        int d = 0;
+        if(!(a + b + c * (a + b) < 0) && 7 < 8) {
+			d = 1;
+			error();
+		}
+		if(6<9)
+			d=2;
+        System.out.print(d);
+	}
+
+	void ex9(boolean a, int b, int c) {
+		int d;
+		if(!a)
+			d = b;
+		else 
+			d = c;
+		if(d < b + c)
+			error();
+	}
+
+	void ex10(int a, int b, int e) {
+		int c, d;
+
+		if(a == 0 || b == 0){
+            d = a + b;
+            if(d == 9 && a == 0){
+                d = a;
+			}
+			if(d == e){
+				error();
+			}
+        } else {
+            
+        }
+	}
+
+	void ex11(int a, int b, int c) {
+        int d, e;
+        if(c == 0){
+			d = a;
+			e = b;
+        } else {
+			d = b;
+			e = a;
+		}
+		
+        if(d <= e){
+            error();
+        }
+	}
+	
+	void ex12(int a, int b, int c) {
+        int d, e, f;
+        if(c == 0){
+			d = a;
+			e = b;
+        } else {
+			d = b;
+			e = a;
+		}
+		
+		if(c + b == 0){
+			f = a;
+		} else {
+			f = b;
+		}
+
+        if(d + e<= f){
+            error();
+        }
+	}
+	
+	void ex13(int a, int b, int c) {
+        int d, e, f;
+        if(c == 0){
+			d = a;
+			e = b;
+        } else {
+			d = b;
+			e = a;
+		}
+		
+		if(c + b == 0){
+			f = d;
+		} else {
+			f = e;
+		}
+
+		int x = f + e;
+        if(x <= d) {
+            error();
+		}
+	}
+
+	void ex14(int a) {
+		int b = 0, c = 1;
+		if(a == 0){
+			b = 1;
+		}
+		if(b == 0){
+			c = a;
+		}
+
+		if(c >= 0){
+			error();
+		}
+	}
+	
+	void error() {
+		int a = 1 / 0;
+		System.out.print(a);
+	}
 }
