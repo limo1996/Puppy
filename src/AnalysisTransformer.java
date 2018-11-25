@@ -31,7 +31,7 @@ public class AnalysisTransformer extends SceneTransformer {
 
                 // Perform Data Flow Analysis on the Graph
                 ConditionalReachingDefinitions analysis = DefinitionFactory.getRepresentation(graph, _s);
-
+				analysis.resolveCondition(analysis.getTargetBlock("error"));
             } catch(RuntimeException ex) {
                 G.v().out.println(ex.getMessage());
             }
