@@ -1,6 +1,7 @@
 package research.analysis;
 
 import java.util.*;
+import java.lang.*;
 
 import soot.*;
 import soot.Value;
@@ -41,7 +42,7 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
         Map<Local, Definition> outBranch = new HashMap<Local, Definition>(src);
 
         if (s instanceof IfStmt) {
-            ConditionExpr condition = (ConditionExpr)((IfStmt)s).getCondition();
+			ConditionExpr condition = (ConditionExpr)((IfStmt)s).getCondition();
             ConditionList list = ((ConditionList)outBranch.get(_curr)).clone();     // need to duplicate curr conditions to be consistent
             ((ConditionList)outBranch.get(_curr)).add(condition);
             list.add(Utils.negate(condition));
@@ -50,7 +51,7 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
         } else if (s instanceof DefinitionStmt) {
             DefinitionStmt defStmt = (DefinitionStmt) s;
             Local variable = (Local)defStmt.getLeftOp();
-            Value definition = defStmt.getRightOp();
+			Value definition = defStmt.getRightOp();
             LocalDefinition def = null;
             if (definition instanceof PhiExpr) {
 				// in case of Phi definition we need to merge existing definitions into new one.
@@ -78,16 +79,34 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
             copy(outBranch, it.next());
     }
 
-    public Value resolveCondition(Unit unit, ConditionExpr condition) {
-        assert condition != null : "ResolveCondition: condition cannot be null!";
-
-        ValueBox vb1 = condition.getOp1Box();
-        ValueBox vb2 = condition.getOp2Box();
-
-        return null;
-    }
-
-    private Value resolveValue(){
-        return null;
-    }
+    public StringBuilder resolveCondition(Unit unit) {
+		Map<Local, Definition> currDefs = getFlowBefore(unit);
+		ConditionList currConditions = (ConditionList)currDefs.get(_curr);
+		StringBuilder builder = new StringBuilder();
+		Set<Implies> finalFormulas = new HashSet<Implies>();
+		ConditionResolver resolver = new ConditionResolver(currDefs);
+		for (Value cond : currConditions.getConditions()) {
+			finalFormulas.addAll(resolver.resolve(cond));
+		}
+		for (Implies i : finalFormulas) {
+			G.v().out.println(i.getLeftExpr().toString() + " ==> " + i.getRightExpr().toString());
+		}
+		return builder;
+	}
+	
+	/**
+	 * TODO:
+		 * What if multiple binops in condition? Should not make a difference...
+		 * Extract current conditions from _curr key
+		 * Iterate over them and convert each of them so they contain only parameters
+		 * Definition:
+			 * Case: single local => call mapToInput with it
+			 * Case: param => we are done. Just return it.
+			 * Case: AbstractBinopExpr:
+				 * Case: Boolean BinopExpr 	=> Get set of definitions for both operands by recursively calling mapToInput on them
+											=> For every pair of conditions imply Binop with substituded values corresponding to conditions
+				 * Case: Arithmetic BinaryExpr => Do the same as for first case
+				 * Case: And, Or: => Call mapToInput recursively on operands
+		 * Adjust Implies to soot api (implement Value, AbstractBinopExpr)
+	 */
 }

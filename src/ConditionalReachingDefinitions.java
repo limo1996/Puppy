@@ -59,7 +59,22 @@ public abstract class ConditionalReachingDefinitions extends ForwardBranchedFlow
                     test(output);
             }
         }
-    }
+	}
+	
+	/**
+	 * Returns block which contains target.
+	 * @param target to contain
+	 * @return Unit
+	 */
+	public Unit getTargetBlock(String target) {
+		Iterator unitIt = graph.iterator();
+		while(unitIt.hasNext()){
+			Unit s = (Unit) unitIt.next();
+			if(s.toString().contains(target))
+				return s;
+		}
+		return null;
+	}
 
     /**
      * Copy simply copies the source to the destination.
@@ -109,7 +124,16 @@ public abstract class ConditionalReachingDefinitions extends ForwardBranchedFlow
         return new HashMap<Local, Definition>();
     }
 
-    public abstract Value resolveCondition(Unit unit, ConditionExpr condition);
+	/**
+	 * Returns condition list for the unit.
+	 * @param unit block in program for which conditions we are interested in.
+	 * @return ConditionList of the unit.
+	 */
+    public ConditionList getUnitConditionList(Unit unit) {
+		return (ConditionList)getFlowBefore(unit).get(_curr);
+	}
+
+	public abstract StringBuilder resolveCondition(Unit unit);
 
     protected void debug(String msg){
         debug(msg, 1);

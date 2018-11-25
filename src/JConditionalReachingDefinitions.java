@@ -76,11 +76,13 @@ public class JConditionalReachingDefinitions extends ConditionalReachingDefiniti
             out.put(_curr, list);
             debug("Fork " + outBranch.toString() + " with " + out.toString(), 1);
         } else if (s instanceof DefinitionStmt) {
-            DefinitionStmt defStmt = (DefinitionStmt) s;
-            Local variable = (Local)defStmt.getLeftOp();
-            Value definition = defStmt.getRightOp();
-            LocalDefinition def = new LocalDefinition(variable, ((ConditionList)src.get(_curr)).clone(), defStmt.getRightOp());
-            out.put(variable, def);
+			DefinitionStmt defStmt = (DefinitionStmt) s;
+			if(defStmt.getLeftOp() instanceof Local) {
+            	Local variable = (Local)defStmt.getLeftOp();
+            	Value definition = defStmt.getRightOp();
+            	LocalDefinition def = new LocalDefinition(variable, ((ConditionList)src.get(_curr)).clone(), defStmt.getRightOp());
+				out.put(variable, def);
+			}
         } 
 
         for (Iterator<Map<Local, Definition>> it = fallOut.iterator(); it.hasNext(); )
@@ -157,16 +159,5 @@ public class JConditionalReachingDefinitions extends ConditionalReachingDefiniti
         return condition;
     }
 
-    public Value resolveCondition(Unit unit, ConditionExpr condition) {
-        assert condition != null : "ResolveCondition: condition cannot be null!";
-
-        ValueBox vb1 = condition.getOp1Box();
-        ValueBox vb2 = condition.getOp2Box();
-
-        return null;
-    }
-
-    private Value resolveValue(){
-        return null;
-    }
+    public StringBuilder resolveCondition(Unit unit) { return null; }
 }
