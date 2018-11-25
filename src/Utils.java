@@ -5,6 +5,7 @@ import soot.jimple.*;
 import soot.jimple.internal.*;
 
 import java.util.Map;
+
 import java.util.HashMap;
 import java.lang.RuntimeException;
 
@@ -53,5 +54,52 @@ class Utils {
 			} 
 		}
 		return ret;
+	}
+
+	/**
+	 * Converts value of every subclass of NumericConstant to double and returns it.
+	 * @param constant Constant which value will be taken
+	 * @return value of the constant 
+	 */
+	public static double getValue(NumericConstant constant) {
+		double result = 0;
+		if (constant instanceof FloatConstant)
+			result = ((FloatConstant)constant).value;
+		else if (constant instanceof DoubleConstant)
+			result = ((DoubleConstant)constant).value;
+		else if (constant instanceof IntConstant)
+			result = ((IntConstant)constant).value;
+		else {
+			assert constant instanceof LongConstant;
+			result = ((LongConstant)constant).value;
+		}
+		return result;
+	}
+	
+	public static Value getNew(Value v, Value left, Value right) {
+		//G.v().out.println("Getting new for " + v.toString() + " left: " + left.toString() + " right: " + right.toString());
+		if(v instanceof BinopExpr) {
+			if (v instanceof CmpExpr) { return new JCmpExpr(left, right); }
+			if (v instanceof CmpgExpr) { return new JCmpgExpr(left, right); }
+			if (v instanceof CmplExpr) { return new JCmplExpr(left, right); }
+			if (v instanceof GtExpr) { return new JGtExpr(left, right); }
+			if (v instanceof GeExpr) { return new JGeExpr(left, right); }
+			if (v instanceof LtExpr) { return new JLtExpr(left, right); }
+			if (v instanceof LeExpr) { return new JLeExpr(left, right); }
+			if (v instanceof EqExpr) { return new JEqExpr(left, right); }
+			if (v instanceof NeExpr) { return new JNeExpr(left, right); }
+			if (v instanceof DivExpr) { return new JDivExpr(left, right); }
+			if (v instanceof MulExpr) { return new JMulExpr(left, right); }
+			if (v instanceof SubExpr) { return new JSubExpr(left, right); }
+			if (v instanceof AddExpr) { return new JAddExpr(left, right); }
+		} else if(v instanceof UnopExpr) {
+			if(v instanceof NegExpr) { return new JNegExpr(left); }
+		}
+		G.v().out.println("Your such a fucking whore I love it..");
+		return null;
+	}
+
+	public static Value clone(Value v) {
+		return v;// instanceof Constant ? v : (Value)v.clone();
 	}
 }
