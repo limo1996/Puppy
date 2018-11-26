@@ -4,15 +4,26 @@ import soot.*;
 import soot.jimple.*;
 import java.util.*;
 
-
+/**
+ * Data class for standard mathematical implication.
+ */
 public class Implies {
 	private Set<Value> left;
 	private Value right;
 
+	/**
+	 * Creates new implication from the another.
+	 * @param other
+	 */
 	public Implies(Implies other) {
 		this(other.left, other.right);
 	}
 
+	/**
+	 * Creates new implication from left and right expressions.
+	 * @param leftExpr
+	 * @param rightExpr
+	 */
 	public Implies(Set<Value> leftExpr, Value rightExpr) {
 		this.left = new HashSet<Value>();
 		for(Value v : leftExpr)
@@ -20,6 +31,7 @@ public class Implies {
 		this.right = Utils.clone(rightExpr);
 	}
 
+	// **** GETTERS and SETTERS
 	public void setLeftExpr(Set<Value> leftExpr) {
 		assert leftExpr != null;
 		this.left = leftExpr;
