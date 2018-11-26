@@ -3,6 +3,11 @@ package research.analysis;
 import soot.*;
 import soot.jimple.*;
 
+/**
+ * Base class for our visitors which simplifies AST traversal by grouping expressions into 
+ * 4 groups: Binary expressions (binopExpr), Unary expressions (unopExpr), 
+ * Numeric Constants (numericConstant) and Locals (caseLocal).
+ */
 public abstract class AbstractBaseSwitch extends AbstractJimpleValueSwitch {
 	// **** LOGICAL EXPRS ****
 	public void caseAndExpr(AndExpr v) { binopExpr(v); }

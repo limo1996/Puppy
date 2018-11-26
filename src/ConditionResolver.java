@@ -6,6 +6,12 @@ import soot.jimple.internal.JimpleLocal;
 
 import java.util.*;
 
+/**
+ * Resolves conditions in the sense that it replaces original variables with their conditional
+ * definitions until final formulas are "pure" i.e. contain only paramaters to the functions.
+ * For each condition to resolve, resolver returns conjuction of implications which represent
+ * orinal condition resolved to contain only pure variables.
+ */
 public class ConditionResolver extends AbstractBaseSwitch {
 	private Map<String, Definition> _definitions;
 	private NParamFinder finder;
@@ -13,13 +19,18 @@ public class ConditionResolver extends AbstractBaseSwitch {
 	private Local tmp_local;
 	private Settings _settings;
 
+	/**
+	 * Creates new instance of ConditionResolver.
+	 * @param definitions at the beginning of the basic block we want to reach.
+	 * @param settings app settings.
+	 */
 	public ConditionResolver(Map<Local, Definition> definitions, Settings settings) {
 		_settings = settings;
 		_definitions = new HashMap<String, Definition>();
 		for (Map.Entry<Local, Definition> entry : definitions.entrySet())
 			_definitions.put(entry.getKey().getName(), entry.getValue());
-		finder = new NParamFinder(_definitions);
-		replacer = new LocalReplacer();
+		finder = new NParamFinder(_definitions, this);
+		replacer = new LocalReplacer(this);
 		tmp_local = new JimpleLocal("something_that_nobody_guesses_reven_hjsfbjhebfhjsebfq8746q873468", BooleanType.v());
 	}
 
@@ -28,33 +39,37 @@ public class ConditionResolver extends AbstractBaseSwitch {
 	// to its result
 	private Set<Implies> result;
 
+	/**
+	 * Resolves condition to conjuction of implications that contain only parameter variables.
+	 */
 	public Set<Implies> resolve(Value condition) {
-		//G.v().out.println("Resolving " + condition.toString());
+		debug("Resolver: Resolving " + condition.toString());
 		result = null;
 		defaultCase(condition);
-		//G.v().out.println("Resolving end " + result.toString());
 		return result;
 	}
 
 	public void unopExpr(UnopExpr v) { // !
-		//G.v().out.println("UnopExpr " + v.toString());
 		defaultCase(v);
 		for (Implies i : result) {
 			UnopExpr nnew = (UnopExpr)v.clone();
-			nnew.getOpBox().setValue(i.getRightExpr());
+			nnew.getOpBox().setValue(i.getRightExpr()); // negate results of children
 			i.setRightExpr(nnew);
 		}
 	}
 
-	public void binopExpr(BinopExpr v) {
-		//G.v().out.println("BinopExpr " + v.toString());
-		ValueBox vb1 = v.getOp1Box(), vb2 = v.getOp2Box();
+	public void binopExpr(BinopExpr v) { // <, >, <=, >=, !=, ==, +, -, /, *
+		ValueBox vb1 = v.getOp1Box();
+		ValueBox vb2 = v.getOp2Box();
+		Set<Implies> left, right, res;
 		defaultCase(v.getOp1());
-		Set<Implies> left = result;
+		left = result;
 		defaultCase(v.getOp2());
-		Set<Implies> right = result;
-		//G.v().out.println(v.toString() + "= {left: " + left.toString() + " right: " + right.toString() + "}");
-		Set<Implies> res = new HashSet<Implies>();
+		right = result;
+		res = new HashSet<Implies>();
+
+		// for all combinations put left parts in the new left part of implication
+		// and new right side will be 'left_right op right_right'
 		for(Implies i1 : left){
 			for(Implies i2 : right){
 				Value bnew = Utils.getNew(v, i1.getRightExpr(), i2.getRightExpr());
@@ -67,55 +82,72 @@ public class ConditionResolver extends AbstractBaseSwitch {
 	}
 
 	public void caseLocal(Local v) {
-		// TODO:
-		// 1. get definition of local
-		// 2. for every not param local in the definition resolve it
-		// 3. Step 2 si probably good to do with another visitor maybe
+		/** 
+		* 1. get definition of local
+		* 2. for every not param local in the definition resolve it
+		* 3. Step 2 si probably good to do with another visitor maybe
 
-		// FACTS:
-		// definition of every variable is set of implications so this method has to create them
-		// EXAMPLE
-		// condition	definition
-		// a == 0		c = a
-		// a != 0		c = b
-		// c > 8		e = a + d
-		// c <= 8		e = b + c
-		// b == 0		d = a
-		// b != 0		d = b
-		// e == 0		f = 2*d
-		// e != 0		f = d/2
+		* FACTS:
+		* definition of every variable is set of implications so this method has to create them
+		* EXAMPLE
+		* condition	definition
+		* a == 0		c = a
+		* a != 0		c = b
+		* c > 8		e = a + d
+		* c <= 8		e = b + c
+		* b == 0		d = a
+		* b != 0		d = b
+		* e == 0		f = 2*d
+		* e != 0		f = d/2
 
-		// RESOLVE *f* TO PARAM:
-		// Ok deep breath. 
-		// RESOLVE f: e == 0 ==> 2*d && e != 0 ==> d/2
-		// Now we see that these expressions contains locals that are not parameters
-		// Next iteration will be with visitor separately on both operands of AND
-		// Non param locals in the expression on the left hand side of implication will be replaced with their
-		// definitions and corresponding conditions will be conjoined to the expression(if more then 2 then for
-		// every definition/condition pair original formula will be duplicated)
-		// i.e. e == 0 will become 	c > 8 && a + d == 0
-		//							c <= 8 && b + c == 0
-		// now we need to resolve c and d
-		// c: a == 0 ==> a && a != 0 ==> b finally we are pure here
-		// plug def. of c in: 	a == 0 && a > 8 && a + d == 0
-		//						a != 0 && a > 8 && a + d == 0
-		//						a == 0 && a <= 8 && b + c == 0
-		//						a != 0 && b <= 8 && b + c == 0
-		//G.v().out.println("Local " + v.toString());
+		* RESOLVE f TO PARAM:
+		* Ok deep breath. 
+		* RESOLVE f: e == 0 ==> 2*d && e != 0 ==> d/2
+		* Now we see that these expressions contains locals that are not parameters
+		* Next iteration will be with visitor separately on both operands of AND
+		* Non param locals in the expression on the left hand side of implication will be replaced with their
+		* definitions and corresponding conditions will be conjoined to the expression(if more then 2 then for
+		* every definition/condition pair original formula will be duplicated)
+		* i.e. e == 0 will become 	c > 8 && a + d == 0
+		*							c <= 8 && b + c == 0
+		* now we need to resolve c and d
+		* c: a == 0 ==> a && a != 0 ==> b finally we are pure here
+		* plug def. of c in: 	a == 0 && a > 8 && a + d == 0
+		*						a != 0 && a > 8 && a + d == 0
+		*						a == 0 && a <= 8 && b + a == 0
+		*						a != 0 && b <= 8 && b + b == 0
+		*
+		* Similarly we resolve the d's definition. 
+		*
+		* In case of right side of implication we substitute on the right and put conditions of definition
+		* to the right side. i.e.
+		* Resolving d in e == 0 ==> 2*d will be:
+		* def. of d: b == 0 ==> a && b != 0 ==> b
+		* so resolved right hand side of the implication will be:
+		* e == 0 && b == 0 ==> 2*a
+		* e == 0 && b != 0 ==> 2*b
+		*/
+
+		debug("Resolver: Processing local " + v.toString(), 1);
 		Set<Implies> pure_defs = new HashSet<Implies>();
-		if(isParam(v))
+
+		// If Local is parameter than the result is (true ==> v) Node that true is in fact empty set
+		// Otherwise we resolve every definition of v (set of implications)
+		if(isParam(v)) {
 			pure_defs.add(new Implies(new HashSet<Value>(), v));
-		else {
+		} else {
 			LocalDefinition ld = (LocalDefinition)_definitions.get(v.getName());
 			for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
 				RLocal right = new RLocal(tmp_local, entry.getValue());
 				pure_defs.addAll(resolveDefinition(new Implies(entry.getKey(), right)));
 			}
 		}
-		//G.v().out.println("Local defs: " + pure_defs.toString());
+
+		debug("Resolver: Local defs: " + pure_defs.toString(), 1);
 		result = pure_defs;
 	}
 
+	// returns true if var is parameter
 	private boolean isParam(Local var) {
 		LocalDefinition ld = (LocalDefinition)_definitions.get(var.getName());
 		Map.Entry<Set<Value>, Value> def = ld.getDefinitions().entrySet().iterator().next();
@@ -127,60 +159,58 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		List<Implies> replaced = new ArrayList<Implies>();
 		Queue<Implies> toProcess = new LinkedList<Implies>();
 		toProcess.add(def);
-		int i = 0;
-		while(!toProcess.isEmpty() && i++ < 100) {
+
+		/**
+		 * High level idea of the algorithm below:
+			 * In every iteration poll new value out of the queue
+			 * Find finder find first not param local in left side of impl.
+			 * If all are parameters then find it in right side
+			 * |	If right is pure as well then push curr implication to resulting sequence
+			 * |	'-> Otherwise for every definition of found not param push its condition
+			 * |		on the left side of new copy of curr implication and replace found not param
+			 * |		with its current definition everywhere in the new implication
+			 * '->  Otherwise for every definition of found not param push its condition
+			 * 		on the left side of the new copy and replace found not param with 
+			 * 		the current definition.
+			 * Return resulting sequence.
+		 */
+		while(!toProcess.isEmpty()) {
 			Implies curr = toProcess.poll();
-			//G.v().out.println("Processing " + curr.getLeftExpr().toString() + " ==> " + curr.getRightExpr().toString());
 			Local toReplace = null;
+			debug("Resolver: Processing " + curr.getLeftExpr().toString() + " ==> " + curr.getRightExpr().toString());
+
 			for(Value v : curr.getLeftExpr()) {
 				toReplace = finder.findFirstNotParam(v);
 				if(toReplace != null)
 					break;
 			}
-			//G.v().out.println("11111111");
+			
 			if(toReplace == null) {
-				toReplace = finder.findFirstNotParam(curr.getRightExpr()); // <- error
-				//G.v().out.println("22222222 ");
+				toReplace = finder.findFirstNotParam(curr.getRightExpr()); 
 				if(toReplace == null)
 					replaced.add(curr);
 				else {
-					//G.v().out.println("333333333");
 					LocalDefinition ld = (LocalDefinition)_definitions.get(toReplace.getName());
-					//G.v().out.println(ld.getDefinitions().toString());
 					for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
-						//G.v().out.println("333333333.11111111");
 						Implies curr_clone = new Implies(curr);
-						//G.v().out.println("333333333.22222222");
-						//G.v().out.println(toReplace + " " + replacer + " " + entry.getValue().toString() + " " + curr_clone.getRightExpr().toString());
 						Value rexpr = curr_clone.getRightExpr();
-						/*if(rexpr instanceof Local && ((Local)rexpr).getName().equals(toReplace.getName()))
-							curr_clone.setRightExpr(entry.getValue());
-						else 
-							replacer.replace(toReplace, (Value)entry.getValue().clone(), curr_clone.getRightExpr());*/
 						replaceRight(toReplace, entry.getValue(), curr_clone);
-						//G.v().out.println("333333333.333333333");
 						for(Value v : entry.getKey())
 							curr_clone.getLeftExpr().add(Utils.clone(v));
-						//G.v().out.println("333333333.44444444444");
+
 						toProcess.add(curr_clone);
-						//G.v().out.println("333333333.44444444444");
 					}
-					//G.v().out.println("44444444444");
 				}
 			} else {
-				//G.v().out.println("5555555555");
 				LocalDefinition ld = (LocalDefinition)_definitions.get(toReplace.getName());
 				for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
-					//G.v().out.println("66666666666");
 					Implies curr_clone = new Implies(curr);
 					for (Value v : curr_clone.getLeftExpr()) {
 						replacer.replace(toReplace, entry.getValue(), v);
 					}
 					replaceRight(toReplace, entry.getValue(), curr_clone);
 					curr_clone.addLeftExpr(entry.getKey());
-					//G.v().out.println("Replaced: " + curr_clone.toString());
 					toProcess.add(curr_clone);
-					//G.v().out.println("66666666666.44444444444");
 				}
 			}
 		}
@@ -207,16 +237,16 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		result.add(new Implies(new HashSet<Value>(), v));
 	}
 
-	protected void debug(String msg){
+	public void debug(String msg){
         debug(msg, 1);
     }
 
-    protected void debug(String msg, int debug){
+    public void debug(String msg, int debug){
         debug(msg, debug, true);
     }
 
     // debug output
-    protected void debug(String msg, int level, boolean newLine) {
+    public void debug(String msg, int level, boolean newLine) {
         _settings.debug(msg, level, newLine);
     }
 
