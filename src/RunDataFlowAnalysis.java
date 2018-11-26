@@ -52,7 +52,7 @@ public class RunDataFlowAnalysis {
 		};
 
 		// Create transformer for analysis
-		AnalysisTransformer analysisTransformer = new AnalysisTransformer(new Settings(3, test_out, representation));
+		AnalysisTransformer analysisTransformer = new AnalysisTransformer(new Settings(3, test_out, representation, Settings.SMTSolver.Z3));
 
 		// Add transformer to appropriate Pack in PackManager. PackManager will run all Packs when main function of Soot is called
 		PackManager.v().getPack(pack).add(new Transform(pack + ".baf", analysisTransformer));

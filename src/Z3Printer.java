@@ -2,9 +2,51 @@ package research.analysis;
 
 import soot.*;
 import soot.jimple.*;
+import java.util.*;
 
-public class Z3Printer extends AbstractJimpleValueSwitch {
+import research.analysis.Implies;
+
+/**
+ * Printer in Z3 SMT Solver format. (by Microsoft Research)
+ */
+public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 	private StringBuilder _builder;
+
+	/**
+	 * Prints set of implications into string builder in Z3 format
+	 */
+	public void print(StringBuilder sb, Set<Implies> defs) {
+		_builder = sb;
+		int i = 0, size = defs.size();
+		sb.append("(assert ");
+		for (Implies imp : defs) {
+			if(i++ < size - 1)
+				_builder.append("(and ");
+			print(imp);
+			if(i < size)
+				_builder.append(' ');
+		}
+		for(; i > 1; i--)
+			_builder.append(')');
+		sb.append(")\n(check-sat)\n(get-model)\n");
+	}
+
+	// appends implication into string builder
+	private void print(Implies imp) {
+		_builder.append("(=> ");
+		// print left conjuction
+		int i = 0, size = imp.getLeftExpr().size();
+		for (Value v : imp.getLeftExpr()) {
+			if(i++ < size - 1)
+				_builder.append("(and ");
+			defaultCase(v);
+		}
+		for(; i > 1; i--)
+			_builder.append(')');
+		_builder.append(' ');
+		defaultCase(imp.getRightExpr());
+		_builder.append(')');
+	}
 
 	// **** LOGICAL EXPRS ****
 	public void caseAndExpr(AndExpr v) { // &&
@@ -111,7 +153,10 @@ public class Z3Printer extends AbstractJimpleValueSwitch {
 
 	// **** VARIABLES ****
 	public void caseLocal(Local v) {
-		_builder.append(v.getName());
+		if(v instanceof RLocal)
+			defaultCase(((RLocal)v).getReplacedBy());
+		else
+			_builder.append(v.getName());
 	}
 
 	// **** HELPER METHODS ****

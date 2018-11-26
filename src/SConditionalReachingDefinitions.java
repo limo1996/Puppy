@@ -84,13 +84,17 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
 		ConditionList currConditions = (ConditionList)currDefs.get(_curr);
 		StringBuilder builder = new StringBuilder();
 		Set<Implies> finalFormulas = new HashSet<Implies>();
-		ConditionResolver resolver = new ConditionResolver(currDefs);
+		ConditionResolver resolver = new ConditionResolver(currDefs, _settings);
 		for (Value cond : currConditions.getConditions()) {
 			finalFormulas.addAll(resolver.resolve(cond));
 		}
+		debug("Final generated formulas:", 3);
 		for (Implies i : finalFormulas) {
-			G.v().out.println(i.getLeftExpr().toString() + " ==> " + i.getRightExpr().toString());
+			debug(i.getLeftExpr().toString() + " ==> " + i.getRightExpr().toString(), 3);
 		}
+
+		Printer printer = _settings.getPrinter();
+		printer.print(builder, finalFormulas);
 		return builder;
 	}
 	

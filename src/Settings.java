@@ -16,11 +16,19 @@ public class Settings {
 		SHIMPLE,
 	}
 
+	/**
+	 * Enum representing user chosen backend SMT Solver.
+	 */
+	public enum SMTSolver {
+		Z3
+	}
+
     private int debug;
 	private boolean testing;
 	private Representation representation;
     private String test_out;
-    private FileWriter _stream;
+	private FileWriter stream;
+	private SMTSolver solver;
 
     /**
      * Creates new instance of Settings.
@@ -28,11 +36,12 @@ public class Settings {
      * @param test_out : path to output file for test purposes. If null no testing.
 	 * @param repr : internal soot representation.
      */
-    public Settings(int debug, String test_out, Representation repr){
+    public Settings(int debug, String test_out, Representation repr, SMTSolver solver){
         this.debug = debug;
         this.testing = test_out != null;
 		this.test_out = test_out;
 		this.representation = repr;
+		this.solver = solver;
 
 		testStart();
     }
@@ -51,9 +60,9 @@ public class Settings {
      */
     public void test(String msg, boolean newLine) {
         if(testing){
-            assert _stream != null : "Stream null but testing?";
+            assert stream != null : "Stream null but testing?";
             try {
-                _stream.write(newLine ? msg + "\n" : msg);
+                stream.write(newLine ? msg + "\n" : msg);
             } catch (Exception ex) {
                 debug(ex.toString(), 3, true);
             }
@@ -69,7 +78,7 @@ public class Settings {
                 File file = new File(test_out);
                 file.createNewFile();
                 new PrintWriter(file).close();
-                _stream = new FileWriter(file, true);
+                stream = new FileWriter(file, true);
             } catch (Exception ex) {
                 debug(ex.toString(), 3, true);
             }
@@ -80,10 +89,10 @@ public class Settings {
      * Should be called at the end of the test. Flushes the data, closes the stream.
      */
     public void testEnd() {
-        if(_stream != null) {
+        if(stream != null) {
             try {
-                _stream.flush();
-                _stream.close();
+                stream.flush();
+                stream.close();
             } catch (Exception ex) {
                 debug(ex.toString(), 3, true);
             }
@@ -97,4 +106,15 @@ public class Settings {
 		return this.representation;
 	}
 
+	/**
+	 * Gets print according to user defined solver.
+	 * @return
+	 */
+	public Printer getPrinter() {
+		switch(solver) {
+			case Z3: return new Z3Printer();
+		}
+		G.v().out.println("Podzemie");
+		return null;
+	}
 }
