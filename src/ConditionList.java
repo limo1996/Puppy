@@ -1,36 +1,72 @@
 package research.analysis;
 
-import java.util.Set;
-import java.util.HashSet;
-import soot.Value;
+import java.util.*;
+
+import soot.*;
+import soot.jimple.internal.*;
 
 /**
  * Class that contains information about depth of the current branch. 
  * It contains conditions that needs to be met in orfer to be in current branch.
  */
 class ConditionList implements Definition {
-    private Set<Value> _currConditions;
+	private List<Value> _currConditions;
 
-    public ConditionList(){
-        _currConditions = new HashSet<Value>();
-    }
+	public ConditionList(){
+		_currConditions = new ArrayList<Value>();
+	}
 
-    /**
-     * Joins current Conditional List with the other and returns new instance.
-     * Should be called when joining of two branches occurs. Internally does intersection of two sets
-     * so joined branch contains conditions from both incoming branches.
+	/**
+	 * Joins current Conditional List with the other and returns new instance.
+	 * Should be called when joining of two branches occurs. Internally does intersection of two sets
+	 * so joined branch contains conditions from both incoming branches.
 	 * Returns null if other is not of type ConditionalList.
-     */
-    public Definition join(Definition other) {
-        if(other instanceof ConditionList) {
-            ConditionList newcl = new ConditionList();
-            newcl._currConditions = new HashSet<Value>(this._currConditions);
-            ConditionList cOther = (ConditionList)other;
-            newcl._currConditions.retainAll(cOther._currConditions);
-            return newcl;
-        }
-        return null;
-    }
+	 */
+	public Definition join(Definition other) {
+		if(other instanceof ConditionList) {
+			ConditionList newcl = new ConditionList();
+			newcl._currConditions = new ArrayList<Value>(this._currConditions);
+			ConditionList cOther = (ConditionList)other;
+			newcl._currConditions.retainAll(cOther._currConditions);
+			
+			// if there one condition filtered out its merge of 2 previously forked branches
+			if(_currConditions.size() == cOther.getConditions().size() 
+				/*&& _currConditions.size() - 1 == newcl.getConditions().size()*/)
+				return newcl;
+				
+			// else its merge of OR or merge after AND
+			List<Value> left = minus(this, newcl);
+			List<Value> right = minus(cOther, newcl);
+			G.v().out.println(left.toString() + " " + right.toString());
+			Value leftE, rightE;
+			if(left.size() == 1 && right.size() > 1) {
+				G.v().out.println("\"" + left.get(0).toString() + "\" == \"" + Utils.createOppositeBranch(right).toString() + "\"");
+				if(left.get(0).toString().equals(Utils.createOppositeBranch(right).toString()))
+					return newcl;
+				leftE = Utils.getFreshRLocal(left.get(0));
+				rightE = Utils.createConjuction(right);
+			} else if(right.size() == 1 && left.size() > 1) {
+				G.v().out.println("\"" + right.get(0).toString() + "\" == \"" + Utils.createOppositeBranch(left).toString() + "\"");
+				if(right.get(0).toString().equals(Utils.createOppositeBranch(left).toString()))
+					return newcl;
+				leftE = Utils.getFreshRLocal(right.get(0));
+				rightE = Utils.createConjuction(left);
+			} else 
+				return newcl;
+			newcl.add(new JOrExpr(leftE, rightE));
+			return newcl;
+		}
+		return null;
+	}
+	
+	// Set A - Set B
+	private List<Value> minus(ConditionList A, ConditionList B) {
+		List<Value> missing = new ArrayList<Value>();
+		for(Value v : A._currConditions)
+			if(!B.getConditions().contains(v))
+				missing.add(v);
+		return missing;
+	}
 
     /**
      * Adds new condition. This function should be called when conditional statement(if, loop)
@@ -44,7 +80,7 @@ class ConditionList implements Definition {
      * Returns set of current conditions.
      */
     public Set<Value> getConditions() {
-        return _currConditions;
+        return new HashSet<Value>(_currConditions);
     }
 
     /**
@@ -68,7 +104,7 @@ class ConditionList implements Definition {
     @Override
     public ConditionList clone() {
         ConditionList cl = new ConditionList();
-        cl._currConditions = new HashSet<Value>(this._currConditions);
+        cl._currConditions = new ArrayList<Value>(this._currConditions);
         return cl;
     }
 }

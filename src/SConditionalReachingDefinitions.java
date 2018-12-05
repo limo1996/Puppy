@@ -82,6 +82,7 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
     public StringBuilder resolveCondition(Unit unit) {
 		Map<Local, Definition> currDefs = getFlowBefore(unit);
 		ConditionList currConditions = (ConditionList)currDefs.get(_curr);
+		debug("Conditions to match: " + currConditions.toString(), 3);
 		StringBuilder builder = new StringBuilder();
 		Set<Implies> finalFormulas = new HashSet<Implies>();
 		ConditionResolver resolver = new ConditionResolver(currDefs, _settings);
