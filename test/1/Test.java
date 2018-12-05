@@ -17,7 +17,7 @@ public class Test {
 		return;
 	}
 
-    void ex1(int a, int b, int c) {
+    void ex1(int a, int b, int c) { // 1
         int d;
         if(c == 0){
             d = a;
@@ -28,7 +28,7 @@ public class Test {
         System.out.println(d);
     }
 
-    void ex2(int a){
+    void ex2(int a){ // 0
         int d = 0;
         if(a == 0){
 			d = 5;
@@ -37,7 +37,7 @@ public class Test {
         System.out.println(d);
     }
 
-    void ex3(int a){
+    void ex3(int a){ // 1
         int d = 0;
         if(a == 0){
             d = 5;
@@ -48,7 +48,7 @@ public class Test {
         System.out.println(d);
     }
 
-    void ex4(int a){
+    void ex4(int a){ // 8
         int d = 0;
         if(a == 0){
             d = 5;
@@ -62,7 +62,7 @@ public class Test {
         System.out.println(d);
     }
 
-    void ex5(int a){
+    void ex5(int a){ // 8
         int d = 0;
         if(a == 0){
             return;
@@ -76,7 +76,7 @@ public class Test {
         System.out.println(d);
     }
 
-    void ex6(int a, int b){
+    void ex6(int a, int b){ // 0 0
         int c, d;
         if(a <= b){
             if(a==b){
@@ -100,7 +100,7 @@ public class Test {
         System.out.println(a + b + c + d);
     }
 
-    void ex7(int a) {
+    void ex7(int a) { // whatever
         int d = 0;
         if(a < 0)
 			d = 1;
@@ -108,7 +108,7 @@ public class Test {
         System.out.print(d);
 	}
 	
-	void ex8(int a, int b, int c) {
+	void ex8(int a, int b, int c) { // -5 7 6
         int d = 0;
         if(!(a + b + c * (a + b) < 0) && 7 < 8) {
 			d = 1;
@@ -119,7 +119,7 @@ public class Test {
         System.out.print(d);
 	}
 
-	void ex9(boolean a, int b, int c) {
+	void ex9(boolean a, int b, int c) { // 1 1 0
 		int d;
 		if(!a)
 			d = b;
@@ -129,7 +129,7 @@ public class Test {
 			error();
 	}
 
-	void ex10(int a, int b, int e) {
+	void ex10(int a, int b, int e) { // 10 0 10
 		int c, d;
 
 		if(a == 0 || b == 0){
@@ -145,7 +145,7 @@ public class Test {
         }
 	}
 
-	void ex11(int a, int b, int c) {
+	void ex11(int a, int b, int c) { // 0 1 0
         int d, e;
         if(c == 0){
 			d = a;
@@ -160,7 +160,7 @@ public class Test {
         }
 	}
 	
-	void ex12(int a, int b, int c) {
+	void ex12(int a, int b, int c) { // 1 0 0
         int d, e, f;
         if(c == 0){
 			d = a;
@@ -176,12 +176,12 @@ public class Test {
 			f = b;
 		}
 
-        if(d + e<= f){
+        if(d + e<= f){ // a + b <= a
             error();
         }
 	}
 	
-	void ex13(int a, int b, int c) {
+	void ex13(int a, int b, int c) { // -3 -1 1
         int d, e, f;
         if(c == 0){
 			d = a;
@@ -203,19 +203,53 @@ public class Test {
 		}
 	}
 
-	void ex14(int a) {
-		int b = 0, c = 1;
+	void ex14(int a) { // 0
+		int b = 0, c = 1; // z0 = 0, i1 = 1
 		if(a == 0){
-			b = 1;
+			b = 1; //z0_1 = 1
 		}
-		if(b == 0){
-			c = a;
+		// z0_2 = {i0 == 0 ==> z0_1, i0 != 0 ==> z0}
+		if(b == 0){ // z0_2 == 0
+			c = a; // i1_1 = i0
 		}
-
-		if(c >= 0){
+		// i1_2 = {z0_2 != 0 ==> i1, z0_2 == 0 ==> i1_1}
+		if(c >= 0){ // i1_2
 			error();
 		}
 	}
+
+	void ex15(int a, int b, int c) { // 1 1 1
+		int x = 1, y = 1, z = 1;
+		if(a == x || b == c || c == a || b == z) {
+			z = 1;
+			if(x == b && b == c && c == a){
+				y = 2;
+			} else {
+				y = 4;
+			}
+		}
+		if (x == 2)
+			x = 1;
+
+		if(x + y + z == 4)
+			error();
+	}
+
+	void curly(int a, int b, int c) { // 0 0 1
+		int x = 0, y = 0, z = 0; 
+		if (a != 0) {
+			x = -2; 
+		}
+		if (b < 5) {
+			if (a == 0 && c != 0) {
+				y = 1; 
+			}
+			z = 2; 
+		}
+		if(x+y+z==3)
+			error();
+	}
+		
 	
 	void error() {
 		int a = 1 / 0;
