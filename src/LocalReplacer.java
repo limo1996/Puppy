@@ -50,7 +50,7 @@ public class LocalReplacer extends AbstractBaseSwitch {
 		if (sl.getReplacedBy() instanceof Local && !(sl.getReplacedBy() instanceof RLocal)) {
 			Local l = (Local)sl.getReplacedBy();
 			if (l.getName().equals(target)) {
-				sl.setReplacedBy(new RLocal(l, with));
+				sl.setReplacedBy(with);
 			}
 		} else
 			defaultCase(((RLocal)v).getReplacedBy());

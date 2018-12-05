@@ -23,13 +23,13 @@ public class RLocal extends JimpleLocal {
 	 */
 	public RLocal(Local l, Value replacedBy) {
 		super(l.getName(), l.getType());
-		this.replacedBy = Utils.clone(replacedBy);
+		this.replacedBy = Utils.clone(replacedBy, true);
 		this.original = l;
 	}
 
 	@Override
 	public Object clone() {
-		return new RLocal(original, Utils.clone(replacedBy));
+		return new RLocal(original, replacedBy);
 	}
 	
 	// **** GETers and SETers ****

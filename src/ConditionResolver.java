@@ -204,8 +204,8 @@ public class ConditionResolver extends AbstractBaseSwitch {
 						Value rexpr = curr_clone.getRightExpr();
 						replaceRight(toReplace, entry.getValue(), curr_clone);
 						for(Value v : entry.getKey())
-							curr_clone.getLeftExpr().add(Utils.clone(v));
-
+							curr_clone.getLeftExpr().add(Utils.clone(v, true));
+						//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
 						toProcess.add(curr_clone);
 					}
 				}
@@ -218,6 +218,7 @@ public class ConditionResolver extends AbstractBaseSwitch {
 					}
 					replaceRight(toReplace, entry.getValue(), curr_clone);
 					curr_clone.addLeftExpr(entry.getKey());
+					//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
 					toProcess.add(curr_clone);
 				}
 			}
@@ -228,10 +229,10 @@ public class ConditionResolver extends AbstractBaseSwitch {
 	// Replaces locals *with* in right part of implication *curr* if they equals *what*
 	private void replaceRight(Local what, Value with, Implies curr) {
 		Value rexpr = curr.getRightExpr();
-		if(rexpr instanceof Local && ((Local)rexpr).getName().equals(what.getName()))
+		if(!(rexpr instanceof RLocal) && rexpr instanceof Local && ((Local)rexpr).getName().equals(what.getName()))
 			curr.setRightExpr(new RLocal(what, with));
 		else {
-			replacer.replace(what, Utils.clone(with), rexpr);
+			replacer.replace(what, Utils.clone(with, true), rexpr);
 		}
 	}
 

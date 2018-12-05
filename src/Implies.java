@@ -44,7 +44,7 @@ public class Implies {
 
 	public void setRightExpr(Value rightExpr) {
 		assert rightExpr != null;
-		this.right = rightExpr;
+		this.right = Utils.clone(rightExpr, true);
 	}
 
 	public Set<Value> getLeftExpr() {

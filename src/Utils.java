@@ -81,7 +81,8 @@ class Utils {
 	public static Value clone(Value v, boolean deep) {
 		if(v instanceof Constant || !deep)
 			return v;
-		return (Value)v.clone();
+		Cloner c = new Cloner();
+		return c.clone(v);
 	}
 
 	public static RLocal createConjuction(List<Value> target) {

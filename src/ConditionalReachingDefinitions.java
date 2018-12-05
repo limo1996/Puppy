@@ -95,8 +95,6 @@ public abstract class ConditionalReachingDefinitions extends ForwardBranchedFlow
                          Map<Local, Definition> src2,
                          Map<Local, Definition> dest) {
 		// merge two branching by joining values one the same keys and adding values on distinct keys. 
-		debug("Merging " + src1.toString() + " with " + src2.toString() + " to dest " + dest.toString(), 1);
-		//debug("Merging " + src1.get(_curr) + " with " + src2.get(_curr), 3);
         copy(src1, dest);
 
         for (Map.Entry<Local, Definition> entry : src2.entrySet()) {
@@ -108,7 +106,9 @@ public abstract class ConditionalReachingDefinitions extends ForwardBranchedFlow
             } else {
                 dest.put(key, value);
             }
-        }
+		}
+		debug("Merging " + src1.toString() + " with " + src2.toString() + " to " + dest.toString(), 1);
+		//debug("Merging " + src1.get(_curr).toString() + " with " + src2.get(_curr).toString() + " to " + dest.get(_curr).toString(), 1);
     }
 
     /**
