@@ -33,7 +33,8 @@ public class AnalysisTransformer extends SceneTransformer {
                 ConditionalReachingDefinitions analysis = DefinitionFactory.getRepresentation(graph, _s);
 				G.v().out.println(analysis.resolveCondition(analysis.getTargetBlock("error")).toString());
             } catch(RuntimeException ex) {
-                G.v().out.println(ex.getMessage());
+				G.v().out.println(ex.getMessage());
+				ex.printStackTrace(G.v().out);
             }
         }
         _s.testEnd();

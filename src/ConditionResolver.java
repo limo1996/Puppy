@@ -72,7 +72,9 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		// and new right side will be 'left_right op right_right'
 		for(Implies i1 : left){
 			for(Implies i2 : right){
-				Value bnew = Utils.getNew(v, i1.getRightExpr(), i2.getRightExpr());
+				BinopExpr bnew = (BinopExpr)v.clone();
+				bnew.getOp1Box().setValue(Utils.getFreshRLocal(i1.getRightExpr()));
+				bnew.getOp2Box().setValue(Utils.getFreshRLocal(i2.getRightExpr()));
 				Implies inew = new Implies(i1.getLeftExpr(), bnew);
 				inew.getLeftExpr().addAll(i2.getLeftExpr());
 				res.add(inew);
@@ -128,6 +130,12 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		* e == 0 && b != 0 ==> 2*b
 		*/
 
+		// If v is RLocal we continue with traversal
+		if(v instanceof RLocal) {
+			defaultCase(((RLocal)v).getReplacedBy());
+			return;
+		}
+
 		debug("Resolver: Processing local " + v.toString(), 1);
 		Set<Implies> pure_defs = new HashSet<Implies>();
 
@@ -177,7 +185,7 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		while(!toProcess.isEmpty()) {
 			Implies curr = toProcess.poll();
 			Local toReplace = null;
-			debug("Resolver: Processing " + curr.getLeftExpr().toString() + " ==> " + curr.getRightExpr().toString());
+			debug("Resolver: Processing " + curr.getLeftExpr().toString() + " ==> " + curr.getRightExpr().toString(), 1);
 
 			for(Value v : curr.getLeftExpr()) {
 				toReplace = finder.findFirstNotParam(v);

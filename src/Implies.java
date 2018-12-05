@@ -27,8 +27,8 @@ public class Implies {
 	public Implies(Set<Value> leftExpr, Value rightExpr) {
 		this.left = new HashSet<Value>();
 		for(Value v : leftExpr)
-			this.left.add(Utils.clone(v));
-		this.right = Utils.clone(rightExpr);
+			this.left.add(Utils.clone(v, true));
+		this.right = Utils.clone(rightExpr, true);
 	}
 
 	// **** GETTERS and SETTERS
@@ -39,7 +39,7 @@ public class Implies {
 
 	public void addLeftExpr(Set<Value> toAdd) {
 		for(Value v : toAdd)
-			this.left.add(Utils.clone(v));
+			this.left.add(Utils.clone(v, true));
 	}
 
 	public void setRightExpr(Value rightExpr) {
