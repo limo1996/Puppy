@@ -11,14 +11,18 @@ import research.analysis.Implies;
  */
 public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 	private StringBuilder _builder;
+	private Set<String> consts;
 
 	/**
 	 * Prints set of implications into string builder in Z3 format
 	 */
 	public void print(StringBuilder sb, Set<Implies> defs) {
+		consts = new HashSet<String>();
 		_builder = sb;
 		int i = 0, size = defs.size();
 		sb.append("(assert ");
+		if(defs.isEmpty())
+			sb.append("True");
 		for (Implies imp : defs) {
 			if(i++ < size - 1)
 				_builder.append("(and ");
@@ -29,6 +33,8 @@ public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 		for(; i > 1; i--)
 			_builder.append(')');
 		sb.append(")\n(check-sat)\n(get-model)\n");
+		for(String c : consts)
+			sb.insert(0, "(declare-const " + c + " Int)\n");
 	}
 
 	// appends implication into string builder
@@ -36,6 +42,8 @@ public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 		_builder.append("(=> ");
 		// print left conjuction
 		int i = 0, size = imp.getLeftExpr().size();
+		if(size == 0) // if empty conditions it means that right has to always hold
+			_builder.append("true ");
 		for (Value v : imp.getLeftExpr()) {
 			if(i++ < size - 1)
 				_builder.append("(and ");
@@ -155,8 +163,10 @@ public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 	public void caseLocal(Local v) {
 		if(v instanceof RLocal)
 			defaultCase(((RLocal)v).getReplacedBy());
-		else
+		else {
 			_builder.append(v.getName());
+			consts.add(v.getName());
+		}
 	}
 
 	// **** HELPER METHODS ****
