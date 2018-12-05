@@ -4,9 +4,7 @@ import soot.*;
 import soot.jimple.*;
 import soot.jimple.internal.*;
 
-import java.util.Map;
-
-import java.util.HashMap;
+import java.util.*;
 import java.lang.RuntimeException;
 
 /**
@@ -75,31 +73,53 @@ class Utils {
 		}
 		return result;
 	}
-	
-	public static Value getNew(Value v, Value left, Value right) {
-		//G.v().out.println("Getting new for " + v.toString() + " left: " + left.toString() + " right: " + right.toString());
-		if(v instanceof BinopExpr) {
-			if (v instanceof CmpExpr) { return new JCmpExpr(left, right); }
-			if (v instanceof CmpgExpr) { return new JCmpgExpr(left, right); }
-			if (v instanceof CmplExpr) { return new JCmplExpr(left, right); }
-			if (v instanceof GtExpr) { return new JGtExpr(left, right); }
-			if (v instanceof GeExpr) { return new JGeExpr(left, right); }
-			if (v instanceof LtExpr) { return new JLtExpr(left, right); }
-			if (v instanceof LeExpr) { return new JLeExpr(left, right); }
-			if (v instanceof EqExpr) { return new JEqExpr(left, right); }
-			if (v instanceof NeExpr) { return new JNeExpr(left, right); }
-			if (v instanceof DivExpr) { return new JDivExpr(left, right); }
-			if (v instanceof MulExpr) { return new JMulExpr(left, right); }
-			if (v instanceof SubExpr) { return new JSubExpr(left, right); }
-			if (v instanceof AddExpr) { return new JAddExpr(left, right); }
-		} else if(v instanceof UnopExpr) {
-			if(v instanceof NegExpr) { return new JNegExpr(left); }
-		}
-		G.v().out.println("Your such a fucking whore I love it..");
-		return null;
-	}
 
 	public static Value clone(Value v) {
-		return v;// instanceof Constant ? v : (Value)v.clone();
+		return v;
+	}
+
+	public static Value clone(Value v, boolean deep) {
+		if(v instanceof Constant || !deep)
+			return v;
+		return (Value)v.clone();
+	}
+
+	public static RLocal createConjuction(List<Value> target) {
+		return rCreate(target, 0);
+	}
+
+	private static RLocal rCreate(List<Value> target, int i) {
+		if(i == target.size() - 2)
+			return getFreshRLocal(new JAndExpr(getFreshRLocal(target.get(i)), getFreshRLocal(target.get(i+1))));
+		return getFreshRLocal(new JAndExpr(getFreshRLocal(target.get(i)), rCreate(target, i+1)));
+	}
+
+	// **** FRESH LOCAL CREATOR ****
+	public static final String BASENAME= "something_that_nobody_guesses_reven_hjsfbjhebfhjsebfq8746q873468";
+	private static int counter = 0;
+
+	public static Local getFreshLocal() {
+		return new JimpleLocal(BASENAME + counter++, BooleanType.v());
+	}
+
+	public static RLocal getFreshRLocal(Value replacedBy) {
+		return new RLocal(getFreshLocal(), replacedBy);
+	}
+
+	public static RLocal createOppositeBranch(List<Value> branch) {
+		assert branch.size() >= 2;
+		RLocal curr = getFreshRLocal(new JOrExpr(
+			getFreshRLocal(negate((ConditionExpr)branch.get(0))), 
+			getFreshRLocal(new JAndExpr(getFreshRLocal(branch.get(0)),
+			getFreshRLocal(negate((ConditionExpr)branch.get(1)))))));
+		return createOppositeBranch(branch, 2, curr);
+	}
+
+	private static RLocal createOppositeBranch(List<Value> branch, int i, RLocal curr) {
+		if(i == branch.size())
+			return curr;
+		List<Value> l = new ArrayList<Value>(branch.subList(0, i));
+		l.add(negate((ConditionExpr)branch.get(i)));
+		return createOppositeBranch(branch, i+1, getFreshRLocal(new JOrExpr(curr, createConjuction(l))));
 	}
 }
