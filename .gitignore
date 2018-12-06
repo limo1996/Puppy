@@ -37,3 +37,7 @@ out/*
 # vscode files
 .DS_Store
 .vscode/
+
+
+#virtual env
+script/venv/

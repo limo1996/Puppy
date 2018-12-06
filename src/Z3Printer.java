@@ -22,7 +22,7 @@ public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 		int i = 0, size = defs.size();
 		sb.append("(assert ");
 		if(defs.isEmpty())
-			sb.append("True");
+			sb.append("true");
 		for (Implies imp : defs) {
 			if(i++ < size - 1)
 				_builder.append("(and ");

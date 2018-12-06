@@ -114,7 +114,6 @@ public class Settings {
 		switch(solver) {
 			case Z3: return new Z3Printer();
 		}
-		G.v().out.println("Podzemie");
 		return null;
 	}
 }

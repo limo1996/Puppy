@@ -55,8 +55,6 @@ public abstract class ConditionalReachingDefinitions extends ForwardBranchedFlow
             for(Map.Entry<Local, Definition> entry : set.entrySet()){
                 String output = entry.getKey().getName() + ":" + entry.getValue().toString();
                 debug(output, level);
-                if(level == 3)
-                    test(output);
             }
         }
 	}
