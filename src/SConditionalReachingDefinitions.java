@@ -79,39 +79,48 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
             copy(outBranch, it.next());
     }
 
-    public StringBuilder resolveCondition(Unit unit) {
+	/**
+	 * Generates SMT formula whose model represents parameter values which lead to execution of given Unit.
+	 * @param unit Block to reach
+	 */
+	public StringBuilder resolveCondition(Unit unit) {
 		Map<Local, Definition> currDefs = getFlowBefore(unit);
 		ConditionList currConditions = (ConditionList)currDefs.get(_curr);
 		debug("Conditions to match: " + currConditions.toString(), 3);
-		StringBuilder builder = new StringBuilder();
 		Set<Implies> finalFormulas = new HashSet<Implies>();
 		ConditionResolver resolver = new ConditionResolver(currDefs, _settings);
 		for (Value cond : currConditions.getConditions()) {
 			finalFormulas.addAll(resolver.resolve(cond));
 		}
+
 		debug("Final generated formulas:", 3);
 		for (Implies i : finalFormulas) {
 			debug(i.getLeftExpr().toString() + " ==> " + i.getRightExpr().toString(), 3);
 		}
 
 		Printer printer = _settings.getPrinter();
+		StringBuilder builder = new StringBuilder();
+		Map<String, Integer> paramToIndex = mapParameters(currDefs);
+
 		printer.print(builder, finalFormulas);
+
+		builder.append("Parameters:\n");
+		for(Map.Entry<String, Integer> entry : paramToIndex.entrySet()) {
+			builder.append(entry.getKey() + ":" + entry.getValue().toString() + "\n");
+		}
 		return builder;
 	}
-	
-	/**
-	 * TODO:
-		 * What if multiple binops in condition? Should not make a difference...
-		 * Extract current conditions from _curr key
-		 * Iterate over them and convert each of them so they contain only parameters
-		 * Definition:
-			 * Case: single local => call mapToInput with it
-			 * Case: param => we are done. Just return it.
-			 * Case: AbstractBinopExpr:
-				 * Case: Boolean BinopExpr 	=> Get set of definitions for both operands by recursively calling mapToInput on them
-											=> For every pair of conditions imply Binop with substituded values corresponding to conditions
-				 * Case: Arithmetic BinaryExpr => Do the same as for first case
-				 * Case: And, Or: => Call mapToInput recursively on operands
-		 * Adjust Implies to soot api (implement Value, AbstractBinopExpr)
-	 */
+
+	private Map<String, Integer> mapParameters(Map<Local, Definition> currDefs) {
+		Map<String, Integer> paramToIndex = new HashMap<String, Integer>();
+		for(Map.Entry<Local, Definition> entry : currDefs.entrySet()) {
+			if(entry.getValue() instanceof LocalDefinition) {
+				LocalDefinition ld = (LocalDefinition)entry.getValue();
+				Map.Entry<Set<Value>, Value> def = ld.getDefinitions().entrySet().iterator().next();
+				if(def.getKey().isEmpty() && def.getValue() instanceof ParameterRef)
+					paramToIndex.put(entry.getKey().getName(), ((ParameterRef)def.getValue()).getIndex());
+			}
+		}
+		return paramToIndex;
+	}
 }
