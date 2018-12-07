@@ -95,7 +95,7 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
 
 		debug("Final generated formulas:", 3);
 		for (Implies i : finalFormulas) {
-			debug(i.getLeftExpr().toString() + " ==> " + i.getRightExpr().toString(), 3);
+			debug(i.toString(), 2);
 		}
 
 		Printer printer = _settings.getPrinter();

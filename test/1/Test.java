@@ -1,29 +1,16 @@
-
-public class Test {
-	
+public class Test {	
 	public static void main(String[] args) {	
-		int i0 = 0;
-		int i1 = 1;
-
-		if (i0 < 10) {
-			i0 = i0 + i1 + 8;
-			i1 = i0;
-		} else {
-            i0 = 9;
-			i1 = 5;
-        }
-
-        System.out.println(i0 + i1);
-		return;
+		Test t = new Test();
+		t.ex18(0,8,10);
 	}
 
-    void ex1(int a, int b, int c) { // 1
+    /*void ex1(int a, int b, int c) { // 0 0 1
         int d;
         if(c == 0){
             d = a;
         } else {
 			d = b;
-			error();
+			error("ex1");
         }
         System.out.println(d);
     }
@@ -32,7 +19,7 @@ public class Test {
         int d = 0;
         if(a == 0){
 			d = 5;
-			error();
+			error("ex2");
         }
         System.out.println(d);
     }
@@ -43,7 +30,7 @@ public class Test {
             d = 5;
         } else {
 			d = 6;
-			error();
+			error("ex3");
         }
         System.out.println(d);
     }
@@ -57,7 +44,7 @@ public class Test {
         }
         if(a >7){
 			d = 8;
-			error();
+			error("ex4");
         }
         System.out.println(d);
     }
@@ -71,7 +58,7 @@ public class Test {
         }
         if(a >7){
 			d = 8;
-			error();
+			error("ex5");
         }
         System.out.println(d);
     }
@@ -94,7 +81,7 @@ public class Test {
         if(c < d){
             a = c;
 			c++;
-			error();
+			error("ex6");
         }
 
         System.out.println(a + b + c + d);
@@ -104,29 +91,29 @@ public class Test {
         int d = 0;
         if(a < 0)
 			d = 1;
-		error();
-        System.out.print(d);
+		error("ex7");
+        System.out.println(d);
 	}
 	
 	void ex8(int a, int b, int c) { // -5 7 6
         int d = 0;
         if(!(a + b + c * (a + b) < 0) && 7 < 8) {
 			d = 1;
-			error();
+			error("ex8");
 		}
 		if(6<9)
 			d=2;
-        System.out.print(d);
+        System.out.println(d);
 	}
 
-	void ex9(boolean a, int b, int c) { // 1 1 0
+	void ex9(int a, int b, int c) { // 1 1 0
 		int d;
-		if(!a)
+		if(a == 0)
 			d = b;
 		else 
 			d = c;
 		if(d < b + c)
-			error();
+			error("ex9");
 	}
 
 	void ex10(int a, int b, int e) { // 10 0 10
@@ -138,7 +125,7 @@ public class Test {
                 d = a;
 			}
 			if(d == e){
-				error();
+				error("ex10");
 			}
         } else {
             
@@ -156,7 +143,7 @@ public class Test {
 		}
 		
         if(d <= e){
-            error();
+            error("ex11");
         }
 	}
 	
@@ -177,7 +164,7 @@ public class Test {
 		}
 
         if(d + e<= f){ // a + b <= a
-            error();
+            error("ex12");
         }
 	}
 	
@@ -199,7 +186,7 @@ public class Test {
 
 		int x = f + e;
         if(x <= d) {
-            error();
+            error("ex13");
 		}
 	}
 
@@ -214,7 +201,7 @@ public class Test {
 		}
 		// i1_2 = {z0_2 != 0 ==> i1, z0_2 == 0 ==> i1_1}
 		if(c >= 0){ // i1_2
-			error();
+			error("ex14");
 		}
 	}
 
@@ -232,7 +219,143 @@ public class Test {
 			x = 1;
 
 		if(x + y + z == 4)
-			error();
+			error("ex15");
+	}
+
+	void ex16(int a, int b, int c) {
+		int x = 1, y = 2, z = 3, w = 4;
+		if(x == b)
+			z = 2;
+		else {
+			if(b == 2 || c == 2){
+				x = 4;
+				y = 3;
+			} else {
+				z = 3;
+			}
+			w = 1;
+		}
+
+		if(c == y && y > 2){
+			w = 8;
+		} else {
+			w = 3;
+		}
+
+		if(x + y + z + w > 10)
+			error("ex16");
+	}
+	
+
+	void ex17(int a, int b, int c) {
+		int x = 1, y = 2, z = 3, w = 4;
+		if(a == c)
+			x = 2;
+		else
+			w = 3;
+
+		if(x == b)
+			z = 2;
+		else {
+			if(b == 2 || c == 2){
+				x = 4;
+				y = 3;
+			} else {
+				z = 3;
+			}
+			w = 1;
+		}
+
+		if(c == y && y > 2) {
+			w = 8;
+		} else {
+			w = 3;
+		}
+
+		if(w + x + y + z> 10)
+			error("ex17");
+	}*/
+
+	void ex18(int a, int b, int c) {
+		int x = 0;
+		if(a == 0) {
+			x = 2;
+			if(b == 3) {
+				x += 5;
+				if(c == 9) {
+					x *= 5;
+				} else {
+					x -= 4;
+				}
+			} else {
+				x *= 3;
+				if(b == 8) {
+					x *= 7;
+				} else {
+					x = 38;
+				}
+			}
+		} else {
+			x = 1;
+		}
+
+		if(x > 40)
+			error("ex18");
+	}
+	
+	/*void ex19(int a, int b, int c) {
+		int x = 1, y = 2, z = 3, w = 4;
+		if(a == c)
+			x = 2;
+		else
+			w = 3;
+		if(x == b)
+			z = 2;
+		else {
+			if(b == 2 || c == 2){
+				x = 4;
+				y = 3;
+			} else {
+				z = 3;
+			}
+			w = 1;
+		}
+
+		if(c == y && y > 2){
+			w = 8;
+		} else {
+			w = 3;
+		}
+
+		if(x + y + z + w > 10)
+			error("ex19");
+	} */
+
+	/*void ex20(int a, int b, int c) {
+		int x = 1, y = 2, z = 3, w = 4;
+		if(a == c)
+			x = 2;
+		else
+			w = 3;
+		if(x == b)
+			z = 2;
+		else {
+			if(b == 2 || c == 2){
+				x = 4;
+				y = 3;
+			} else {
+				z = 3;
+			}
+		}
+
+		if(c == y && y > 2){
+			w = 8;
+		} else {
+			w = 3;
+		}
+
+		if(w + x + y + z > 10)
+			error("ex20");
 	}
 
 	void curly(int a, int b, int c) { // 0 0 1
@@ -247,12 +370,16 @@ public class Test {
 			z = 2; 
 		}
 		if(x+y+z==3)
-			error();
-	}
+			error("curly");
+	}*/
 		
 	
-	void error() {
-		int a = 1 / 0;
-		System.out.print(a);
+	void error(String msg) {
+		System.out.println("Error:" + msg);
 	}
 }
+
+/**
+ * TODO:
+ * Find better strategy for picking of element to replace
+ */
