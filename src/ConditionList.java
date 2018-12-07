@@ -3,6 +3,7 @@ package research.analysis;
 import java.util.*;
 
 import soot.*;
+import soot.jimple.ConditionExpr;
 import soot.jimple.internal.*;
 
 /**
@@ -40,14 +41,12 @@ class ConditionList implements Definition {
 			G.v().out.println(left.toString() + " " + right.toString());
 			Value leftE, rightE;
 			if(left.size() == 1 && right.size() > 1) {
-				G.v().out.println("\"" + left.get(0).toString() + "\" == \"" + Utils.createOppositeBranch(right).toString() + "\"");
-				if(left.get(0).toString().equals(Utils.createOppositeBranch(right).toString()))
+				if(!longerAllConditionExpr(right) || left.get(0).toString().equals(Utils.createOppositeBranch(right).toString()))
 					return newcl;
 				leftE = Utils.getFreshRLocal(left.get(0));
 				rightE = Utils.createConjuction(right);
 			} else if(right.size() == 1 && left.size() > 1) {
-				G.v().out.println("\"" + right.get(0).toString() + "\" == \"" + Utils.createOppositeBranch(left).toString() + "\"");
-				if(right.get(0).toString().equals(Utils.createOppositeBranch(left).toString()))
+				if(!longerAllConditionExpr(left) || right.get(0).toString().equals(Utils.createOppositeBranch(left).toString()))
 					return newcl;
 				leftE = Utils.getFreshRLocal(right.get(0));
 				rightE = Utils.createConjuction(left);
@@ -66,6 +65,19 @@ class ConditionList implements Definition {
 			if(!B.getConditions().contains(v))
 				missing.add(v);
 		return missing;
+	}
+
+	// returns true if all Values are condition expr
+	private boolean longerAllConditionExpr(List<Value> toCheck) {
+		for(Value v : toCheck) {
+			Value v2 = v;
+			if(v instanceof RLocal)
+				v2 = ((RLocal)v).getReplacedBy();
+			if(!(v2 instanceof ConditionExpr)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
     /**
