@@ -9,6 +9,7 @@ import java.util.*;
  */
 public class Implies {
 	private Set<Value> left;
+	private Set<String> left_s;
 	private Value right;
 
 	/**
@@ -26,20 +27,18 @@ public class Implies {
 	 */
 	public Implies(Set<Value> leftExpr, Value rightExpr) {
 		this.left = new HashSet<Value>();
-		for(Value v : leftExpr)
-			this.left.add(Utils.clone(v, true));
+		this.left_s = new HashSet<String>();
+		for(Value v : leftExpr) {
+			tryAddLeft(v);
+		}
 		this.right = Utils.clone(rightExpr, true);
 	}
 
 	// **** GETTERS and SETTERS
-	public void setLeftExpr(Set<Value> leftExpr) {
-		assert leftExpr != null;
-		this.left = leftExpr;
-	}
-
 	public void addLeftExpr(Set<Value> toAdd) {
-		for(Value v : toAdd)
-			this.left.add(Utils.clone(v, true));
+		for(Value v : toAdd) {
+			tryAddLeft(v);
+		}
 	}
 
 	public void setRightExpr(Value rightExpr) {
@@ -60,11 +59,10 @@ public class Implies {
 		return getLeftExpr().toString() + " ==> " + getRightExpr().toString();
 	}
 
-	public Implies deepCopy() {
-		Set<Value> newleft = new HashSet<Value>();
-		for(Value v : left)
-			newleft.add(Utils.clone(v));
-		Value newright = Utils.clone(right);
-		return new Implies(newleft, newright);
+	private void tryAddLeft(Value l) {
+		if(!left_s.contains(l.toString())){
+			left.add(Utils.clone(l, true));
+		}
+		left_s.add(l.toString());
 	}
 }

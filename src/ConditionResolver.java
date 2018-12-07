@@ -185,7 +185,7 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		while(!toProcess.isEmpty()) {
 			Implies curr = toProcess.poll();
 			Local toReplace = null;
-			debug("Resolver: Processing " + curr.getLeftExpr().toString() + " ==> " + curr.getRightExpr().toString(), 1);
+			debug("Resolver: Processing " + curr.toString(), 1);
 
 			for(Value v : curr.getLeftExpr()) {
 				toReplace = finder.findFirstNotParam(v);
