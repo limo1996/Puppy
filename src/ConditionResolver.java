@@ -76,7 +76,7 @@ public class ConditionResolver extends AbstractBaseSwitch {
 				bnew.getOp1Box().setValue(Utils.getFreshRLocal(i1.getRightExpr()));
 				bnew.getOp2Box().setValue(Utils.getFreshRLocal(i2.getRightExpr()));
 				Implies inew = new Implies(i1.getLeftExpr(), bnew);
-				inew.getLeftExpr().addAll(i2.getLeftExpr());
+				inew.addLeftExpr(i2.getLeftExpr());
 				res.add(inew);
 			}
 		}
@@ -204,7 +204,7 @@ public class ConditionResolver extends AbstractBaseSwitch {
 						Value rexpr = curr_clone.getRightExpr();
 						replaceRight(toReplace, entry.getValue(), curr_clone);
 						for(Value v : entry.getKey())
-							curr_clone.getLeftExpr().add(Utils.clone(v, true));
+							curr_clone.addLeftExpr(Utils.clone(v, true));
 						//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
 						toProcess.add(curr_clone);
 					}

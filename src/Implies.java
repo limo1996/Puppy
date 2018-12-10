@@ -17,7 +17,12 @@ public class Implies {
 	 * @param other
 	 */
 	public Implies(Implies other) {
-		this(other.left, other.right);
+		this.left = new HashSet<Value>();
+		this.left_s = new HashSet<String>(other.left_s);
+		for(Value v : other.left) {
+			left.add(Utils.clone(v, true));
+		}
+		this.right = Utils.clone(other.right, true);
 	}
 
 	/**
@@ -41,6 +46,10 @@ public class Implies {
 		}
 	}
 
+	public void addLeftExpr(Value v) {
+		tryAddLeft(v);
+	}
+
 	public void setRightExpr(Value rightExpr) {
 		assert rightExpr != null;
 		this.right = Utils.clone(rightExpr, true);
@@ -60,9 +69,9 @@ public class Implies {
 	}
 
 	private void tryAddLeft(Value l) {
-		if(!left_s.contains(l.toString())){
-			left.add(Utils.clone(l, true));
-		}
+		if(left_s.contains(l.toString()))
+			return;
+		left.add(Utils.clone(l, true));
 		left_s.add(l.toString());
 	}
 }
