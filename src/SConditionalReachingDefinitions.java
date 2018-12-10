@@ -93,9 +93,11 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
 			finalFormulas.addAll(resolver.resolve(cond));
 		}
 
-		debug("Final generated formulas:", 3);
-		for (Implies i : finalFormulas) {
-			debug(i.toString(), 2);
+		debug("Final generated formulas (size " + finalFormulas.size() + "):", 3);
+		if(finalFormulas.size() <= 20) {
+			for (Implies i : finalFormulas) {
+				debug(i.toString(), 3);
+			}
 		}
 
 		Printer printer = _settings.getPrinter();
