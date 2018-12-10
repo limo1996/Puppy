@@ -10,30 +10,31 @@ public class Test {
 		t.ex7(0);
 		t.ex8(-5,7,6);
 		t.ex9(1,1,0);
-		t.ex10(10,0,10);
-		t.ex11(0,1,0);
-		t.ex12(1,0,0);
-		t.ex13(-3,-1,1);
+		t.ex10(0,0,0);
+		t.ex11(-1,0,0);
+		t.ex12(0,2,-1);
+		t.ex13(-3,-1,-1);
 		t.ex14(0);
 		t.ex15(1,1,1);
-		t.ex16(0,0,2);
+		t.ex16(0,2,3);
 		t.ex17(4,2,3);
 		t.ex18(0,8,10);
-		t.ex19(2,3,2);
+		t.ex19(2,1,2);
 		t.ex20(4,2,3);
 		t.curly(0,0,1);
 		t.swapping(0,0);
-		t.bright(0,0,5,-4,-1,4,-1);
+		t.bright(0,0,6,-2,-2,5,-2);
 		t.div(0);
 		t.lon(0);
-		t.javali1(-1,0,0,0);
+		t.javali1(-1,-1,0,-1);
 		t.javali2(3,2,2);
 		t.deepPure(0,0,0,0,7,0,0,0);
 		t.lol(3);
-		t.lol2(4);
+		t.lol2(3);
 		t.lol3(4);
-		t.deep_mini(-1,-5,-8,-8,-4,-4);
-		t.deep(6,1,-6,2,1,1);
+		t.deep_mini(-6,-6,-6,-4,-2,-2);
+		t.deep(-1,-1,0,0,0,0);
+		t.deepProp(5,-5,-13);
 	}
 
     void ex1(int a, int b, int c) { // 0 0 1
@@ -622,6 +623,21 @@ public class Test {
 			if(x != y)
 				error("deep");
 		}
+	}
+
+	void deepProp(int i0, int i1, int i2) {
+		int l0, l1, l2, l3, l4, l5;
+		l0 = i0 + i1;
+		l1 = l0 * 2;
+		l2 = l0 + l1;
+		l3 = i0 * 2 + i2 - l2;
+		l4 = l0 + l1 + l2 + l3;
+		if(l4 + l3 == l2)
+			l5 = l2+l1;
+		else 
+			l5 = l4 * l3 - l1;
+		if(l5 == 9)
+			error("deepProp");
 	}
 		
 	void error(String msg) {
