@@ -123,6 +123,11 @@ public class Z3Printer extends AbstractJimpleValueSwitch implements Printer {
 		appendBinopExpr(v);
 	}
 
+	public void caseRemExpr(RemExpr v) { // %
+		_builder.append("(mod ");
+		appendBinopExpr(v);
+	}
+
 	public void caseMulExpr(MulExpr v) { // *
 		_builder.append("(* ");
 		appendBinopExpr(v);

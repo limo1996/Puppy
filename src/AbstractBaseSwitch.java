@@ -42,6 +42,7 @@ public abstract class AbstractBaseSwitch extends AbstractJimpleValueSwitch {
 	public void caseMulExpr(MulExpr v) { binopExpr(v); }
 	public void caseSubExpr(SubExpr v) { binopExpr(v); }
 	public void caseAddExpr(AddExpr v) { binopExpr(v); }
+	public void caseRemExpr(RemExpr v) { binopExpr(v); }
 
 	public void caseParameterRef(ParameterRef v) { }
 
