@@ -30,6 +30,8 @@ public class Settings {
 	private FileWriter stream;
 	private SMTSolver solver;
 
+	public int numOfFormulasToPrint = 20;
+
     /**
      * Creates new instance of Settings.
      * @param debug : debug level <1,3> -> the higher the less information (but more important) is printed.

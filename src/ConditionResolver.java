@@ -186,44 +186,47 @@ public class ConditionResolver extends AbstractBaseSwitch {
 			Implies curr = toProcess.poll();
 			Local toReplace = null;
 			debug("Resolver: Processing " + curr.toString(), 1);
+			toReplace = finder.findFirstNotParam(curr.getRightExpr());
 
-			for(Value v : curr.getLeftExpr()) {
-				toReplace = finder.findFirstNotParam(v);
-				if(toReplace != null)
-					break;
-			}
-			
 			if(toReplace == null) {
-				toReplace = finder.findFirstNotParam(curr.getRightExpr()); 
+				for(Value v : curr.getLeftExpr()) {
+					toReplace = finder.findFirstNotParam(v);
+					if(toReplace != null)
+						break;
+				}
+
 				if(toReplace == null)
 					replaced.add(curr);
-				else {
-					LocalDefinition ld = (LocalDefinition)_definitions.get(toReplace.getName());
-					for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
-						Implies curr_clone = new Implies(curr);
-						Value rexpr = curr_clone.getRightExpr();
-						replaceRight(toReplace, entry.getValue(), curr_clone);
-						for(Value v : entry.getKey())
-							curr_clone.addLeftExpr(Utils.clone(v, true));
-						//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
-						toProcess.add(curr_clone);
-					}
-				}
-			} else {
-				LocalDefinition ld = (LocalDefinition)_definitions.get(toReplace.getName());
-				for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
-					Implies curr_clone = new Implies(curr);
-					for (Value v : curr_clone.getLeftExpr()) {
-						replacer.replace(toReplace, entry.getValue(), v);
-					}
-					replaceRight(toReplace, entry.getValue(), curr_clone);
-					curr_clone.addLeftExpr(entry.getKey());
-					//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
-					toProcess.add(curr_clone);
-				}
-			}
+				else // left
+					replaceCurrent(curr, toReplace, toProcess, false);
+			} else // right
+				replaceCurrent(curr, toReplace, toProcess, true);
 		}
 		return replaced;
+	}
+
+	/**
+	 * Replaces all occurences of @param toReplace in current implication and adds new implication to @param toProcess
+	 * @param curr current implication
+	 * @param toReplace local to be replaced
+	 * @param toProcess working queue
+	 * @param right if is true than both sides are processed otherwise only left side of implication
+	 */
+	private void replaceCurrent(Implies curr, Local toReplace, Queue<Implies> toProcess, boolean right) {
+		LocalDefinition ld = (LocalDefinition)_definitions.get(toReplace.getName());
+		for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
+			Implies curr_clone = new Implies(curr);
+			if(right) // if false means that right has nothing to replace
+				replaceRight(toReplace, entry.getValue(), curr_clone);
+
+			for (Value v : curr_clone.getLeftExpr()) {
+				replacer.replace(toReplace, entry.getValue(), v);
+			}
+			if(ld.getDefinitions().size() > 1) // is size is 1 there is only one definition and condition is irrelevant since its already present
+				curr_clone.addLeftExpr(entry.getKey());
+			//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
+			toProcess.add(curr_clone);
+		}
 	}
 
 	// Replaces locals *with* in right part of implication *curr* if they equals *what*

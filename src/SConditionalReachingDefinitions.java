@@ -94,7 +94,7 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
 		}
 
 		debug("Final generated formulas (size " + finalFormulas.size() + "):", 3);
-		if(finalFormulas.size() <= 20) {
+		if(finalFormulas.size() <= _settings.numOfFormulasToPrint) {
 			for (Implies i : finalFormulas) {
 				debug(i.toString(), 3);
 			}
