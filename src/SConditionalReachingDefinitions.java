@@ -67,7 +67,7 @@ public class SConditionalReachingDefinitions extends ConditionalReachingDefiniti
                     def.addDefinition(conditions.getConditions(), local);
                 }
             } else {
-                def = new LocalDefinition(variable, ((ConditionList)src.get(_curr)).clone(), defStmt.getRightOp());
+                def = new LocalDefinition(variable, new ConditionList()/*((ConditionList)src.get(_curr)).clone()*/, defStmt.getRightOp());
             }
             out.put(variable, def);
         } 

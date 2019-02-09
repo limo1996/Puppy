@@ -136,7 +136,12 @@ public class ConditionResolver extends AbstractBaseSwitch {
 			return;
 		}
 
-		debug("Resolver: Processing local " + v.toString(), 1);
+		if(precomputedLocals.containsKey(v.getName())) {
+			result = precomputedLocals.get(v.getName());
+			return;
+		}
+
+		debug("Resolver: Processing local " + v.toString(), 3);
 		Set<Implies> pure_defs = new HashSet<Implies>();
 
 		// If Local is parameter than the result is (true ==> v) Node that true is in fact empty set
@@ -151,8 +156,9 @@ public class ConditionResolver extends AbstractBaseSwitch {
 			}
 		}
 
-		debug("Resolver: Local defs: " + pure_defs.toString(), 1);
+		debug("Resolver: Local defs of " + v.getName() + ": "+ pure_defs.size(), 3);
 		result = pure_defs;
+		precomputedLocals.put(v.getName(), result);
 	}
 
 	// returns true if var is parameter
@@ -212,7 +218,7 @@ public class ConditionResolver extends AbstractBaseSwitch {
 	 * @param toProcess working queue
 	 * @param right if is true than both sides are processed otherwise only left side of implication
 	 */
-	private void replaceCurrent(Implies curr, Local toReplace, Queue<Implies> toProcess, boolean right) {
+	/*private void replaceCurrent(Implies curr, Local toReplace, Queue<Implies> toProcess, boolean right) {
 		LocalDefinition ld = (LocalDefinition)_definitions.get(toReplace.getName());
 		for (Map.Entry<Set<Value>, Value> entry : ld.getDefinitions().entrySet()) {
 			Implies curr_clone = new Implies(curr);
@@ -222,8 +228,25 @@ public class ConditionResolver extends AbstractBaseSwitch {
 			for (Value v : curr_clone.getLeftExpr()) {
 				replacer.replace(toReplace, entry.getValue(), v);
 			}
-			if(ld.getDefinitions().size() > 1) // is size is 1 there is only one definition and condition is irrelevant since its already present
+			if(ld.getDefinitions().size() > 1) // if size is 1 there is only one definition and condition is irrelevant since its already present
 				curr_clone.addLeftExpr(entry.getKey());
+			//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
+			toProcess.add(curr_clone);
+		}
+	}*/
+
+	private void replaceCurrent(Implies curr, Local toReplace, Queue<Implies> toProcess, boolean right) {
+		Set<Implies> defs = getLocalResolvedDefinition(toReplace);
+		for (Implies entry : defs) {
+			Implies curr_clone = new Implies(curr);
+			if(right) // if false means that right has nothing to replace
+				replaceRight(toReplace, entry.getRightExpr(), curr_clone);
+
+			for (Value v : curr_clone.getLeftExpr()) {
+				replacer.replace(toReplace, entry.getRightExpr(), v);
+			}
+			if(defs.size() > 1) // if size is 1 there is only one definition and condition is irrelevant since its already present
+				curr_clone.addLeftExpr(entry.getLeftExpr());
 			//debug("Resolver: Pushing " + curr_clone.toString() + " original " + curr.toString(), 3);
 			toProcess.add(curr_clone);
 		}
@@ -237,6 +260,15 @@ public class ConditionResolver extends AbstractBaseSwitch {
 		else {
 			replacer.replace(what, Utils.clone(with, true), rexpr);
 		}
+	}
+
+	private Map<String, Set<Implies>> precomputedLocals = new HashMap<String, Set<Implies>>();
+	private Set<Implies> getLocalResolvedDefinition(Local l) {
+		String name = l.getName();
+		if(!precomputedLocals.containsKey(name)) {
+			caseLocal(l);
+		}
+		return precomputedLocals.get(name);
 	}
 
 	/**

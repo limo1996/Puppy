@@ -10,31 +10,36 @@ public class Test {
 		t.ex7(0);
 		t.ex8(-5,7,6);
 		t.ex9(1,1,0);
-		t.ex10(10,0,10);
-		t.ex11(1,0,1);
-		t.ex12(1,0,0);
-		t.ex13(-3,-1,1);
+		t.ex10(9,0,9);
+		t.ex11(-1,0,0);
+		t.ex12(0,1,0);
+		t.ex13(1,0,0);
 		t.ex14(0);
 		t.ex15(1,1,1);
 		t.ex16(0,2,3);
 		t.ex17(4,2,3);
 		t.ex18(0,8,10);
-		t.ex19(3,3,2);
-		t.ex20(4,2,3);
+		t.ex19(4,2,3);
+		t.ex20(2,0,2);
 		t.curly(0,0,1);
 		t.swapping(0,0);
-		t.bright(0,0,-2,0,2,-3,2);
+		t.bright(0,0,-1,-5,-1,-6,6);
 		t.div(0);
 		t.lon(0);
-		t.javali1(0,0,1,0);
-		t.javali2(3,2,2);
+		t.javali1(1,0,0,1);
+		t.javali2(4,2,2);
 		t.deepPure(0,0,0,0,7,0,0,0);
 		t.lol(0);
 		t.lol2(3);
 		t.lol3(4);
-		t.deep_mini(-6,7,0,-8,-4,-4);
-		t.deep(-1,-2,1,0,0,0);
+		t.deep_mini(-8,-8,-8,0,0,0);
+		t.deep(-6,2,0,-6,-3,-3);
 		t.deepProp(5,-5,-13);
+		t.tricky(0);
+		t.tricky2(0,1,-8,-8,0,-8);
+		t.tricky3(2,0,2);
+		t.tricky4(0);
+		t.pres(2,3);
 	}
 
     void ex1(int a, int b, int c) { // 0 0 1
@@ -638,6 +643,152 @@ public class Test {
 			l5 = l4 * l3 - l1;
 		if(l5 == 9)
 			error("deepProp");
+	}
+
+	void tricky(int a) {
+		if (a > 0)
+			return;
+		error("tricky");
+	}
+
+	void tricky2(int a, int b, int c, int d, int e, int f) {
+		int x = a * b + c;
+		int y = d - e;
+		int z = 0;
+
+		if(x == f && y == a * b + c) {
+			if(x == y || f == e || b == a || c == a)
+				z = 9;
+			else 
+				return;
+		}
+
+		if(x != y && f == e + a && d == a)
+			return;
+
+		if(z == 9) {
+			if(x == y)
+				error("tricky2");
+		}
+	}
+
+	void tricky3(int a, int b, int c) {
+		int x = 1, y = 2, z = 3, w = 4;
+		if(a == c)
+			x = 2;
+		else
+			return;
+
+		if(x == b)
+			return;
+		else {
+			if(b == 2 || c == 2){
+				x = 4;
+				y = 2;
+			} else {
+				z = 3;
+			}
+		}
+
+		if(c == y && y >= 2){
+			w = 8;
+		} else {
+			return;
+		}
+
+		if(w + x + y + z > 10)
+			error("tricky3");
+	}
+
+	void tricky4(int a) {
+		int x = a;
+		if(x + 1 <= 0)
+			return;
+		x = x * x;
+		if(x % 2 == 1)
+			return;
+
+		if(a != x)
+			return;
+		
+		error("tricky4");
+	}
+
+
+	void loop1(int a) {
+		int i = 0;
+		while(i < a) {
+			if(i == a-1)
+				error("loop1");
+			i++;
+		}
+	}
+
+	void pres(int b, int c) {
+		int x = 1, y = 2, z = 3, w = 4;
+		if(x == b)
+			z = 2;
+		else {
+			if(b == 2 || c == 2){
+				x = 4;
+				y = 3;
+			} else {
+				z = 3;
+			}
+			w = 1;
+		}
+
+		if(c == y && y > 2){
+			w = 8;
+		} else {
+			w = 3;
+		}
+
+		if(x + y + z + w > 10)
+			error("pres");
+	}
+
+	void superLong(int a, int b, int c, int d, int e, int f) {
+		int x = 0, y = f, z = x - 1;
+		if(a == 9 && c == 0) {
+			x = y + z;
+			y = f;
+		} else {
+			z = x;
+			x = 8 + d;
+		}
+
+		if(d + e == f) {
+			x = 5;
+			z = x + c + y;
+		} else {
+			y = x;
+			x = z;
+		}
+
+		if(x + y == z)
+			x = 100;
+		else 
+			y = x + z;
+
+		if(z * 8 + c == d)
+			x = x * 6;
+		else 
+			x = x - 40;
+
+		if(x*x > a * b * c * y * z)
+			y = x + z * c;
+
+		if(b + c == e + f) {
+			z = z + 80;
+			if(b == 7 || b == 9)
+				z = z + 10;
+			else
+				y = y - 80;
+		}
+		
+		if(x + y + z > 1000 && a > 8 && y != 0)
+			error("superLong");
 	}
 
 	void error(String msg) {
