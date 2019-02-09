@@ -41,3 +41,12 @@ out/*
 
 #virtual env
 script/venv/
+
+#report files
+report/Presentation.key
+report/report.aux
+report/report.fdb_latexmk
+report/report.fls
+report/report.out
+report/synctex.gz
+

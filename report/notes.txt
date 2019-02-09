@@ -1,0 +1,288 @@
+
+Goal
+
+The goal of this project is to create an algorithm together with a tool which is able to create a test case 
+that reaches certain basic block (location) in a program. We do not constrain ourselves to certain language 
+but we assume that there exists a parser of such a language which can produce a Control Flow Graph (CFG)
+that will be used for further processing. We also assume that there exists some set of testcases for a 
+program or alternativelly there exists a grammar of an input file. We also assume that the program takes a file
+as an input. 
+Result of our approach should be a valid input file which triggers code in the location specified by us. 
+Our goal is not primarily find bugs in the code but rather find a ways how to trigger specific paths in
+a program.
+
+Existing approaches 
+
+Research in the area of automatic tests generation can be divided to:
+    - Fuzzing
+    - Concolic testing
+and
+    - Black box fuzz testing
+    - White box fuzz testing
+    - Grey box fuzz testing
+
+In our approach we have to use white box fuzz testing because we need to know the structure of a program 
+in order to generate input that will reach certain location. In black/grey box testing it would be 
+completely ineffective since randomness is not that usefull in our setting. 
+
+Idea
+
+Inital idea was to use SMT solver that would give us model for input variables which we constrain 
+along the path we want to traverse. We would encode every condition into first order logic SMT syntax
+and create one big conjuction of it. Then we would provide it to the SMT solver which will hopefully
+find a model for it. If not than this block is not reachable otherwise we would need to encode
+model into an input file.. 
+
+Open Questions
+
+How to map model to an input file? 
+Do we need to know grammar of the input?
+Or are few test cases sufficient?
+
+Microsoft SAGE
+
+White box fuzzing of binary files (Windows). Does symbolic execution together with real one. 
+Tries to exploit all paths (not always feasible). By negating subset of constrains on the path.
+Use heurestics since negating some conditions does not necesarilly guarantees new path.
+
+Java PathFinder
+
+We found an evidence : https://github.com/javapathfinder/jpf-core/wiki/Different-applications-of-JPF#explore-execution-alternatives
+where they claim that they are able to create an input file that executes specified code region
+(needs to be checked with the authors). Maybe to heavy to use in our approach. 
+
+Our approach
+
+Because of the time constraints of the project we decided to simplify our problem describtion. 
+Input to our program should be java function with 1 to n parameters. They should all be numbers 
+(integer, double, short etc.) Furthermore function can contain all mathematical operations, 
+assignments, if statements. Loops are for now not considered. The reason for supporting only primitive
+types is aliasing which destroys our assumtions. Example of a supported program:
+
+void example(int a, int b, int c) {
+	int x = 1, y = 2, z = 3, w = 4;
+	if(a == c)
+		x = 2;
+	else
+		w = 3;
+	if(x == b)
+		z = 2;
+	else {
+		if(b == 2 || c == 2){
+			x = 4;
+			y = 3;
+		} else {
+			z = 3;
+		}
+	}
+
+	if(c == y && y > 2){
+		w = 8;
+	} else {
+		w = 3;
+	}
+
+	if(w + x + y + z > 10)
+		error("ex20");
+}
+
+The output of our program should be function call with concrete values whose execution should 
+lead to execution of predefined block of code. In example above this block of code is call to
+error function which only prints provided string. The output of our program for the function 
+above should be following call: example(4,2,3); This call is one of the possible calls leading 
+to execution of function error. Our goal is to find one such call or say no such a call exists.
+
+CFG
+In our approach we are working on top of the Control Flow Graph whose nodes are parts of code  
+blocks of statements which are always executed together. Edges are directed and connect blocks
+that can be executed after each other. 
+
+Conditional Definitions
+
+On the top of the CFG we first run modified version of Reaching Definitions which we call 
+Conditional Definitions. In reaching definitions we are usually interested in null 
+pointers analysis or constant propagation and therefore keep set of definitions without any 
+context. In our case we need to understand when each definition is used and therefore we 
+need to keep condition which "guards" this definition. In the following example we have some
+unknown "a" and local variable x. Its definition after x statement is ambiguous since there 
+are exactly two definitions. However with conditional definitions which is triple (x,A,B) where 
+x is local variable A are conditions and B definitions. Following program can be represented 
+in Conditional definitions as (x, a < 0, 1), (x, a >= 0, 0). 
+
+int x = 0;
+if(a < 0)
+	x = 1;
+
+Conditional Definitions are computed with forward branched flow analysis. There are 2 important
+events we need to pay special attention to. They are merge and flow through.
+
+* merge
+In merge event we are merging flow from two branches. In our case of Conditional Definitions we 
+need to store both definitions since this information is important to us. 
+
+* flow through
+Flow through is event that is called on every statement. In this event we need to update flow 
+coming from previous statement by information that current statement provides. In case of our 
+analysis we are interested in 3 types of statements. 
+
+** If Statement ** forks current branch. In our case we can propagate current condition 
+	in both branches that follow. Current condition is conjuction of conditions that need
+	to hold so that current statement can be excuted. For instance in example 2 curr.
+	condition of line 1 is [True] because this statement will always be excuted. However for line 3
+	is [a < 0] since this condition needs to hold if x = 1 wants to be executed.
+	If statement in our example would propagate [a < 0] to branch satisfying condition and [a >= 0]
+	to the other branch.
+
+** Phi ** Phi statement merges different versions of the same variable. This expression occurs 
+whenever variable was modified in one or more branches. If we encounter such a expression we need 
+to create Conditional Definitions of new version of variable (variable that is being assigned with Phi node).
+Condition of every definition will be current condition of branch where the actual definition was defined.
+
+** Definition ** Normal def. statement like x = expr; Our action in Conditional Definitions is to replace 
+or append new defintion of variable being assigned.
+
+After running analysis we have definition set for every block in the program. 
+	
+
+SSA 
+Static single assignment form is very useful in many optimizations techniques or program verification.
+We use it as well since it is very useful in value propagation because there exists always only 
+one assignment to every variable version. Example above will look in SSA form as follows:
+
+int x1, x2, x3;
+x1 = 0;
+if(a < 0)
+	x2 = 1;
+x3 = Phi(x1, x2);
+
+where Phi expression is merging point of two variable versions. We will describe exact usage of SSA 
+later on. 
+
+SMT solving
+Satisfiability modulo theories is decisition problem for logical formulas from multiple theories. 
+In our approach we are using only integer and boolean theory (=, !=, <, <=, >=, >, %, +, -, *, /, ==>, &&, ||, <==>). 
+In general we need to know that SMT Solver is program that takes SMT formula as input and checks if formula 
+is satisfiable. In case it is solver provides model satisfying it as well. We can think of formula as 
+first order formula for example: x < 0 && y > 9 ==> 6 == x*2
+In our approach we do not use quantifiers and predicates.
+
+Encoding to SMT 
+If we want to synthesise input to function in order to reach basic block we need to understand the program
+by encoding it to SMT formula. If we want to execute piece of code we need to satisfy conditions guarding it.
+For instance in example 1 we need to satisfy w + x + y + z > 10 in order to execute error function call. Simple 
+idea would be to encode it directly to SMT. However all variables are locals which have their interpretations. 
+They are not completely unknown to us since we know their definitions. Therefore we need to have in our 
+final formula only variables that are truly unknown and these are function parameters. Model that would SMT 
+solver return will then be parameter assignment that executes part of the code we want. 
+
+In order to encode SMT formula we need to replace local variables in guarding conditions so that final
+formula contains only parameters. With SSA is much easier since every variable is assigned only once. 
+There are however multiple definitions of variables because of the merging Phi node. Conditional 
+definitions however help because we know under which condition they hold. Furthermore conditional definitions 
+can be think of as conjuction of implications. For instance definition of x in example 2 can be converted to
+a < 0 ==> 1 && a >= 0 ==> 0. 
+
+Merging
+Let's say we want to resolve condition x > y which guards region of code we want to execute and definition 
+of x is a < 0 ==> 1 && a >= 0 ==> 0 and the one of y is a < 0 ==> 4 && a >= 0 ==> -1. Logically corresponding 
+region of code is:
+
+int x = 0, y = -1;
+if(a<0){
+	x = 1;
+	y = 4;
+}
+
+We can see that we have two definitions for both x and y. Merging definitions of two local variables in the same 
+expression is conjuction of implications that have on the right side formula with replaced locals and on the left
+side conjuction of all preconditions of the definitions that replaced original locals. So in our case the result 
+would look like:
+
+a < 0 ==> 1 > 4 &&
+a < 0 && a >= 0 ==> 1 > -1 &&
+a >= 0 && a < 0 ==> 0 > 4 &&
+a >= 0 ==> 0 > -1
+
+This formula can be provided to SMT solver. It will return SAT/UNSAT (in our case sat) together with model in SAT case.
+For formulas above it will be number in range <0, infinity). The reason for it is that formulas 2 and 3 have false left 
+sides and therefore will become irrelevant for the solver. Remaining formulas have complementary left hand sides so 
+solver has to decide which side it wants to make true. It will decide for the one in formula 4 since this is the only 
+way how to satisfy the whole formula.
+
+Resolving
+In order to execute block of the code we need to satisfy its guarding conditions. If we want to synthetise input to the 
+function we need to create SMT formula described in previous sections which will have parameters as unknowns. 
+In order to achieve it we need to resolve all local variables in guarding conditions to parameters or constants. We can
+provide such a resolved conditions to the SMT solver and obtain the model. We propose following algorithm for resolving 
+guarding conditions:
+
+
+What about loops?
+
+* There 3 possible positions of code we want to invoke to loop. If the code is before loop we do not need to consider it.
+If piece of code is inside loop without any condition guarding it we need to fulfill loop condition at least once. 
+If it is guarded by some additional condtion inside loop we need to satisfy this condition as well. If condition 
+contains loop variable i.e. variable that is modified inside loop we need to identify bounds or set of values that this 
+variable can take and imply the condition. If targeted code is after for loop we need to check if loop terminates and 
+if condition contains loop variables we need to identify their bounds as well.
+
+Examples
+
+void ex1(int a) {
+	int i = 0;
+	while(i < a) {
+		if(i == a-1)
+			error();
+		i++;
+	}
+}
+
+int i1, i2, i3;
+i1 = 0;
+while(i3 < a) {
+	i3 = Phi(i1, i2)
+	if()
+}
+we need to identify bounds for i. They are <0, a). (In this case it is interval). Now we need to satisfy 
+i < a and i == a-1 in order to reach error call. In our final formula we have to have a that is greater 
+or equal to 0 in order to execute loop at least once and inner condition will hold always exactly once 
+during loop execution but our program does not know it. Final encoding will look like:
+
+0 <= i && i < a && i == a-1
+
+
+void ex2(int a) {
+	int x1 = 2;
+	int i = 1;
+	while(i < a) {
+		x3 = Phi(x1,x2)
+		x2 = i*x3; // 2 4 12 48
+		i++;
+	}
+	x4 = Phi(x1, x2)
+	if(x4 == 48)
+		error();
+}
+
+
+void ex2(int a) {
+	int x = 2;
+	int i = 1;
+	while(i < a) {
+		x = i*x; // 2 4 12 48
+		i++;
+	}
+	if(x == 48)
+		error();
+}
+
+
+
+* Treat loop variables as unknowns 
+* Identify bounds on 
+
+What if are targeted location requires single loop to be executed n-times?
+
+What works and what not:
+
+Soot - 
