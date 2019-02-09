@@ -6,6 +6,7 @@ assert len(sys.argv) == 3
 out_file = sys.argv[1]
 target_file = sys.argv[2]
 line_to_insert = 3
+test_skipped = set()
 
 def parse_param(params, model):
 	dic = {}
@@ -20,17 +21,20 @@ def parse_param(params, model):
 def runZ3(input, params, method):
 	global line_to_insert
 	global final_lines
+	global test_skipped
 	input2 = "".join(input)
-	#print(input2)
 	smt2 = parse_smt2_string(input2)
 	s = Solver()
 	s.add(smt2)
-	s.check()
-	#print(s.model())
-	call = "\t\tt.{0}({1});\n".format(method, ",".join(parse_param(params, s.model())))
-	#print(call)
-	final_lines.insert(line_to_insert, call)
-	line_to_insert+=1
+	
+	if str(s.check()) == "sat":
+		call = "\t\tt.{0}({1});\n".format(method, ",".join(parse_param(params, s.model())))
+		print("[{0}]\t\tmodel generated.".format(method))
+		final_lines.insert(line_to_insert, call)
+		line_to_insert+=1
+	else:
+		test_skipped.add(method)
+		print("[{0}]\t\tmodel does not exists.".format(method))
 
 with open(out_file, 'r+') as f:
 	lines = f.readlines()
@@ -45,7 +49,6 @@ params = False
 all_methods = set()
 for line in lines:
 	if line.startswith('method:'):
-		print(method, len(smt_lines))
 		if len(smt_lines) > 0:
 			runZ3(smt_lines, param_lines, method)
 			param_lines = []
@@ -78,6 +81,7 @@ diff = all_methods - correct_exec
 diff.remove('main')
 diff.remove('<init>')
 diff.remove('error')
+diff = diff - test_skipped
 
 if len(diff) == 0:
 	print("All OK")
