@@ -8,8 +8,9 @@ import soot.*;
 public class RunDataFlowAnalysis {
 	public static void main(String[] args) {
 		
-        String test_out = null, wholep = "-w", jimple_s = "J", pack="wjtp";
-        Settings.Representation representation = Settings.Representation.JIMPLE;
+        String test_out = null, wholep = "-w", jimple_s = "J", pack="wjtp", time_out = null;
+		Settings.Representation representation = Settings.Representation.JIMPLE;
+		int n_of_runs = 1;
 
 		// parse command line arguments
 		if (args.length == 0) {
@@ -22,7 +23,12 @@ public class RunDataFlowAnalysis {
             }
             if (args.length >= 3) {
                 test_out = args[2];
-            }
+			}
+			if(args.length >= 4) {
+				assert args.length >= 5 : "Timing out file not provided"; 
+				n_of_runs = Integer.parseInt(args[3]);
+				time_out = args[4];
+			}
         }
 		
 		// set parameters for shimple
@@ -52,7 +58,7 @@ public class RunDataFlowAnalysis {
 		};
 
 		// Create transformer for analysis
-		AnalysisTransformer analysisTransformer = new AnalysisTransformer(new Settings(3, test_out, representation, Settings.SMTSolver.Z3));
+		AnalysisTransformer analysisTransformer = new AnalysisTransformer(new Settings(3, test_out, representation, Settings.SMTSolver.Z3, n_of_runs, time_out));
 
 		// Add transformer to appropriate Pack in PackManager. PackManager will run all Packs when main function of Soot is called
 		PackManager.v().getPack(pack).add(new Transform(pack + ".baf", analysisTransformer));
